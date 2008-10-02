@@ -1,0 +1,493 @@
+#!/bin/bash -
+############################################################################
+#
+# akmods - Rebuilds and install akmod RPMs
+# Copyright (c) 2007, 2008 Thorsten Leemhuis <fedora@leemhuis.info>
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+############################################################################
+#
+# ToDo:
+# - use yum on install required kernel-devel pacakges?
+# - subprocess on dameon stop?
+# - better way to detect if a earlier build failed or succeed
+# - manpage
+# - make use of the new posttrans hook in kenrel package?
+# - locking?
+# - special kernel "all" (all that are installed with a matching -devel package; could be called from posttrans in akmods packages)
+
+# global vars
+myprog="akmods"
+myver="0.3.3"
+kmodlogfile=
+continue_line=""
+tmpdir=
+kernels=
+verboselevel=2
+
+akmods_echo()
+{
+	# where to output
+	local this_fd=${1}
+	shift
+
+	# verboselevel
+	local this_verbose=${1}
+	shift
+
+	# output to console
+	if [[ ! ${daemon} ]] && (( ${verboselevel} >= ${this_verbose} )) ; then
+		if [[ "${1}" == "--success" ]] ; then
+			echo_success
+			continue_line=""
+			echo
+			return 0	
+		elif [[ "${1}" == "--failure" ]]; then
+			echo_failure
+			echo
+			continue_line=""
+			return 0
+		elif [[ "${1}" == "--warning" ]]; then
+			echo_warning
+			echo
+			continue_line=""
+			return 0
+		elif [[ "${1}" == "-n" ]]; then
+			continue_line="true"
+		fi
+		echo "$@" >&${this_fd}
+	fi
+
+	# no need to print the status flags in the logs
+	if [[ "${1}" == "--success" ]] || [[ "${1}" == "--failure" ]] || [[ "${1}" == "--warning" ]]; then
+		return 0
+	fi
+
+	# no need to continues in the log
+	if [[ "${1}" == "-n" ]]; then
+		shift
+	fi
+
+	# global logfile
+	echo "$(date +%d\ %b\ %H:%M:%S) akmods: $@" >> "/var/cache/akmods/akmods.log"
+
+	# the kmods logfile as well, if we work on a kmod
+	if [[ "${kmodlogfile}" ]]; then
+		echo "$(date +%d\ %b\ %H:%M:%S) akmods: $@" >> "${kmodlogfile}"
+	fi
+}
+
+finally()
+{
+	# remove tmpfiles
+	remove_tmpdir
+
+	# remove pidfile
+	[[ "${daemon}" ]] && rm -f /var/run/${myprog}.pid
+
+	exit 128
+}
+trap "finally" ABRT EXIT HUP INT QUIT
+
+create_tmpdir()
+{
+	if ! tmpdir="$(mktemp -d -t ${myprog}.XXXXXXXX)/" ; then 
+		akmods_echo 2 1  "ERROR: failed to create tmpdir."
+		akmods_echo 2 1 --failure; return 1
+	fi
+	if ! mkdir "${tmpdir}"results ; then
+		akmods_echo 2 1  "ERROR: failed to create result tmpdir."
+		akmods_echo 2 1 --failure; return 1
+	fi
+}
+
+remove_tmpdir()
+{
+	# remove tmpfiles
+	if [[ "${tmpdir}" ]] && [[ -d "${tmpdir}" ]]; then
+		rm -f "${tmpdir}"results/* "${tmpdir}"*.log
+		rmdir "${tmpdir}"results/ "${tmpdir}"
+	fi
+}
+
+cleanup_cachedir ()
+{
+	create_tmpdir
+	find /boot/ -maxdepth 1 -name 'vmlinuz*' | sed 's|/boot/vmlinuz-||' > "${tmpdir}"results/kernels
+	find "/var/cache/akmods/" -maxdepth 2 -mtime +14 -type f \( -name '*.rpm' -or -name '*.log' \) | grep -v --file "${tmpdir}"results/kernels | xargs --no-run-if-empty rm
+	remove_tmpdir
+}
+
+init ()
+{
+	# some security provisions 
+	\export PATH='/usr/kerberos/sbin:/usr/kerberos/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin'
+	\unalias -a
+	hash -r
+	ulimit -H -c 0 --
+	IFS=$' \t\n'
+	UMASK=022
+	umask ${UMASK}
+
+	# fall back to current kernel if user didn't provide one
+	if [[ ! "${kernels}" ]]; then
+		kernels="$(uname -r)"
+	fi
+
+	# we get the echo_{success,failure} stuff and the daemon method from there
+	if [[ -r /etc/rc.d/init.d/functions ]]; then
+		source /etc/rc.d/init.d/functions
+	else
+		echo "/etc/rc.d/init.d/functions not found" >&2
+		exit 1
+	fi
+
+	# needs root permissions
+	if [[ ! -w / ]]; then
+		echo -n "Needs to run as root to be able to install rpms." >&2
+		echo_failure; echo; exit 1
+	fi
+
+	# no akmods
+	if [[ ! -d "/usr/src/akmods/" ]] ; then
+		echo -n "/usr/src/akmods/ not found." >&2
+		echo_failure; echo; exit 1
+	fi
+
+	# if there are no akmod packages installed there is nothing to do for us
+	if ! ls /usr/src/akmods/*-kmod.latest &> /dev/null ; then
+		echo -n "No akmod packages found." >&2
+		echo_failure; echo; exit 1
+	fi
+
+
+	# now that we know that we're root make sure our dir for logging and results is avilable
+	if [[ ! -d "/var/cache/akmods/" ]] ; then
+		if ! mkdir -p "/var/cache/akmods/" ; then
+			echo -n "/var/cache/akmods/ not found and could not be created" >&2
+			echo_failure; echo; exit 1
+		fi
+	fi
+	if [[ ! -w "/var/cache/akmods/" ]] ; then
+		echo -n "${directory} not writable" >&2
+		echo_failure; echo; exit 1
+	fi
+
+	# tools needed
+	for tool in akmodsbuild chown sed rpmdev-vercmp; do
+		if ! which "${tool}" &> /dev/null ; then
+			echo -n "${tool} not found" >&2
+			echo_failure; echo; exit 1
+		fi
+	done
+}
+
+buildinstall_kmod()
+{
+	local this_kernelver=${1}
+	local this_kmodname=${2}
+	local this_kmodsrpm=${3}
+	local this_kmodverrel=${4}
+
+	if [[ ! -r "${this_kmodsrpm}" ]]; then
+		akmods_echo 2 1 "ERROR: ${this_kmodsrpm} not found."
+		akmods_echo 2 1 --failure; return 1
+	fi
+
+
+	# result and logdir
+	if [[ ! -d "/var/cache/akmods/${this_kmodname}" ]]; then
+		if ! mkdir "/var/cache/akmods/${this_kmodname}" ; then
+			akmods_echo 2 1  "ERROR: could not create /var/cache/akmods/${this_kmodname}."
+			akmods_echo 2 1 --failure; return 1
+		fi
+	fi
+
+	## preparations
+	# tmpdir
+	create_tmpdir
+
+	# akmods needs to write there (and nobody else, but mktemp takes care fo that!)
+	chown akmods "${tmpdir}" "${tmpdir}"results
+
+	# remove old logfiles if they exist
+	rm -f "/var/cache/akmods/${this_kmodname}/${this_kmodverrel}-for-${this_kernelver}.log" "/var/cache/akmods/${this_kmodname}/.last.log"
+
+	# create a per kmod logfile
+	if ! touch "/var/cache/akmods/${this_kmodname}/.last.log" ; then
+		akmods_echo 2 1  "ERROR: failed to create kmod specific logfile."
+		return 1
+	fi
+
+	# akmods_echo will log to this file from now on as well
+	kmodlogfile="/var/cache/akmods/${this_kmodname}/.last.log"
+
+	# build module using akmod
+	akmods_echo 1 4 "Building RPM using the command '$(which akmodsbuild) --target $(uname -m) --kernels ${this_kernelver} ${this_kmodsrpm}'"
+	/sbin/runuser -s /bin/bash -c "$(which akmodsbuild) --quiet --quiet --target $(uname -m) --kernels ${this_kernelver} --outputdir ${tmpdir}results --logfile ${tmpdir}/akmodsbuild.log ${this_kmodsrpm}" akmods >> "${kmodlogfile}" 2>&1
+	local returncode=$?
+
+	# copy rpmbuild log to kmod specific logfile
+	if [[ -s "${tmpdir}"/akmodsbuild.log ]]; then
+		while read line ; do
+			echo "$(date +%d\ %b\ %H:%M:%S) akmodsbuild: ${line}" >> "${kmodlogfile}"
+		done < "${tmpdir}"/akmodsbuild.log
+	fi
+
+	# result
+	if (( ! ${returncode} == 0 )); then
+		if [[ "${continue_line}" ]]; then
+			akmods_echo 1 2 --failure
+		fi
+		akmods_echo 2 1  "Building rpms failed; see /var/cache/akmods/${this_kmodname}/${this_kmodverrel}-for-${this_kernelver}.failed.log for details"
+		cp -l "${kmodlogfile}" "/var/cache/akmods/${this_kmodname}/${this_kmodverrel}-for-${this_kernelver}.failed.log"
+		kmodlogfile=""
+		remove_tmpdir
+		return 4
+	fi
+
+	# install
+	akmods_echo 1 4 "Installing newly built rpms"
+	rpm -U $(find "${tmpdir}results" -type f -name '*.rpm' | grep -v debuginfo) >> "${kmodlogfile}" 2>&1 
+	local returncode=$?
+
+	# place the newly built rpms where user expects them
+	cp "${tmpdir}results/"* "/var/cache/akmods/${this_kmodname}/"
+
+	# everything fine?
+	if (( ${returncode} != 0 )); then
+			if [[ "${continue_line}" ]]; then
+				akmods_echo 1 2 --failure
+			fi
+			akmods_echo 2 1 "Could not install newly built RPMs. You can find them and the logfile"
+			akmods_echo 2 1 "${this_kmodverrel}-for-${this_kernelver}.failed.log in /var/cache/akmods/${this_kmodname}/"
+			cp -l "${kmodlogfile}" "/var/cache/akmods/${this_kmodname}/${this_kmodverrel}-for-${this_kernelver}.failed.log"
+			kmodlogfile=""
+			remove_tmpdir
+			return 8
+	fi
+
+	# finish
+	akmods_echo 1 4 "Successful."
+	cp -l "${kmodlogfile}" "/var/cache/akmods/${this_kmodname}/${this_kmodverrel}-for-${this_kernelver}.log"
+	kmodlogfile=""
+	remove_tmpdir
+
+	return 0
+}
+
+check_kmod_up2date()
+{
+	local this_kernelver=${1}
+	local this_kmodname=${2}
+
+	# kmod present?
+	if [[ ! -d /lib/modules/${this_kernelver}/extra/${this_kmodname}/ ]] ; then
+		# build it
+		return 1
+	fi
+
+	# kmod up2date? 
+	local kmodpackage="$(rpm -qf /lib/modules/${this_kernelver}/extra/${this_kmodname}/ 2> /dev/null)"
+	if [[ ! "${kmodpackage}" ]]; then
+		# seems we didn't get what we wanted
+		# well, better to do nothing in this case
+		akmods_echo 1 2 -n "Warning: Could not determine what package owns /lib/modules/${this_kernelver}/extra/${this_kmodname}/"
+		return 0
+	fi
+	local kmodver=$(rpm -q --qf '%{EPOCH}:%{VERSION}-%{RELEASE}\n' "${kmodpackage}" | sed 's|(none)|0|; s!\.\(fc\|lvn\)[0-9]*!!g')
+	local akmodver=$(rpm -qp --qf '%{EPOCH}:%{VERSION}-%{RELEASE}\n' /usr/src/akmods/"${this_kmodname}"-kmod.latest | sed 's|(none)|0|; s!\.\(fc\|lvn\)[0-9]*!!g')
+
+	# are they equal?
+	if [[ "${kmodver}" == "${akmodver}" ]]; then
+		return 0
+	fi
+	
+	local newestpkgver=$(rpmdev-vercmp "${kmodver}" "${akmodver}" 2>/dev/null | awk '{print $1}')
+	if [[ ! "${kmodver}" ]] || [[ ! "${akmodver}" ]] || [[ ! "${newestpkgver}" ]] ; then
+		# seems we didn't get what we wanted
+		# well, better to do nothing in this case
+		akmods_echo 1 2 -n "Warning: Could not determine if akmod is newer then the installed kmod"
+		return 0
+	elif [[ "${akmodver}" == "${newestpkgver}" ]] ; then
+		# build it
+		return 1
+	else
+		return 0
+	fi
+}
+
+check_kmods()
+{
+	local this_kernelver="${1}"
+
+	akmods_echo 1 2 -n "Checking kmods exist for ${this_kernelver}"
+	for akmods_kmodfile in /usr/src/akmods/*-kmod.latest ; do
+		local this_kmodname="$(basename ${akmods_kmodfile%%-kmod.latest})"
+		
+		# actually check this akmod?
+		if [[ "${akmods}" ]]; then
+			for akmod in ${akmods} ; do
+				if [[ "${this_kmodname}" != "${akmod}" ]] ; then
+					# ignore this one
+					continue 2
+				fi
+			done
+		fi
+
+		# go
+		if ! check_kmod_up2date ${this_kernelver} ${this_kmodname} ; then
+			# okay, kmod wasn't found or is not up2date
+			if [[ "${continue_line}" ]]; then
+				akmods_echo 1 2 --warning
+				# if the files for building modules are not avilable don't even try to build modules
+				if [[ ! -r /usr/src/kernels/"${this_kernelver}"/Makefile ]] || [[ ! -r  /lib/modules/${this_kernelver}/build/Makefile ]]; then
+					akmods_echo 1 2 "Files needed for building modules against kernel"
+					akmods_echo 1 2 "${this_kernelver} could not be found as the following" 
+					akmods_echo 1 2 "directories are missing:" 
+					akmods_echo 1 2 "/usr/src/kernels/${this_kernelver}/" 
+					akmods_echo 1 2 -n "/lib/modules/${this_kernelver}/build/" 
+					akmods_echo 1 2 --failure
+					return 1
+				fi
+			fi
+
+			local this_kmodverrel="$(rpm -qp --qf '%{VERSION}-%{RELEASE}' "${akmods_kmodfile}" | sed 's!\.\(fc\|lvn\)[0-9]*!!g' )"
+			if [[ ! "${alwaystry}" ]] && [[ -e "/var/cache/akmods/${this_kmodname}/${this_kmodverrel}-for-${this_kernelver}".failed.log ]]; then
+				akmods_echo 1 2 -n "Ignoring ${this_kmodname}-kmod as it failed earlier" 
+				akmods_echo 1 2 --warning
+				local someignored="true"
+			else
+				akmods_echo 1 2 -n "Building and installing ${this_kmodname}-kmod"
+			 	if buildinstall_kmod ${this_kernelver} ${this_kmodname} ${akmods_kmodfile} ${this_kmodverrel} ; then
+					akmods_echo 1 2 --success
+				else
+					local somefailed="true"
+				fi
+			fi
+		fi
+	done
+
+	if [[ "${continue_line}" ]]; then
+		akmods_echo 1 2 --success
+	elif [[ "${someignored}" ]] || [[ "${somefailed}" ]] ; then
+		echo
+		akmods_echo 1 2 "Hint: Some kmods were ignored or failed to build or install." 
+		akmods_echo 1 2 "You can try to rebuild and install them by by calling" 
+		akmods_echo 1 2 "'/usr/sbin/akmods --force' as root."
+		echo
+		sleep 2
+	fi
+
+}
+
+myprog_help ()
+{
+	echo "Usage: ${myprog} [OPTIONS]"
+	echo $'\n'"Checks the akmod packages and rebuilds them if needed"
+	echo $'\n'"Available options:"
+	echo " --force             -- try all, even if they failed earlier"
+	echo " --kernels <kernel>  -- build and install only for kernel <kernel>"
+	echo " --akmod <akmod>     -- build and install only akmod <akmod>"
+}
+
+
+# first parse command line options
+while [ "${1}" ] ; do
+	case "${1}" in
+		--kernel|--kernels)
+			shift
+			if [[ ! "${1}" ]] ; then
+				echo "ERROR: Please provide the kernel-version to build for together with --kernel" >&2
+				exit 1
+			elif [[ ! -r /usr/src/kernels/"${1}"/Makefile ]] || [[ ! -r  /lib/modules/${1}/build/Makefile ]]; then
+				echo "Could not find files needed to compile modules for ${1}"
+				exit 1
+			elif [[ -r /usr/src/kernels/"${1}"/Makefile ]] && [[ ! -r  /boot/vmlinuz-"${1}" ]]; then
+				# this is a red hat / fedora kernel-devel package, but the kernel for it is not installed
+				# kmodtool would adds a dep on that kernel when building; thus when we'd try to install the 
+				# rpms we'd run into a missing-dep problem. Thus we prevent that case
+				echo "Kernel ${1} not installed"
+				exit 1
+			fi
+			# overwrites the default:
+			kernels="${kernels}${1}"
+			# an try to build, even if we tried already
+			alwaystry=true
+			shift
+			;;
+		--akmod|--kmod)
+			shift
+			if [[ ! "${1}" ]] ; then
+				echo "ERROR: Please provide a name of a akmod package together with --akmods" >&2
+				exit 1
+			elif [[ -r /usr/src/akmods/"${1}"-kmod.latest ]] ; then 
+				akmods="${akmods}${1} "
+			elif [[ -r /usr/src/akmods/"${1}".latest ]] ; then 
+				akmods="${akmods}${1%%-kmod} "
+			else
+				echo "Could not find akmod ${1}"
+				exit 1
+			fi
+			shift
+			;;
+		--force)
+			alwaystry=true
+			shift
+			;;
+		--from-posttrans|--from-init|--from-akmod)
+			# does nothing (yet!)
+			shift
+			;;
+		--verbose)
+			let verboselevel++
+			shift
+			;;
+		--quiet)
+			let verboselevel--
+			shift
+			;;
+		--help)
+			myprog_help
+			exit 0
+			;;
+		--version)
+			echo "${myprog} ${myver}"
+			exit 0
+			;;
+		*)
+			echo "Error: Unknown option '${1}'." >&2
+			myprog_help >&2
+			exit 2
+			;;
+	esac
+done
+
+# sanity checks
+init
+
+# go
+for kernel in ${kernels} ; do
+		check_kmods ${kernel}
+done
+
+# finished :)
+finally
