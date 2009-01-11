@@ -174,8 +174,8 @@ init ()
 
 	# if there are no akmod packages installed there is nothing to do for us
 	if ! ls /usr/src/akmods/*-kmod.latest &> /dev/null ; then
-		echo -n "No akmod packages found." >&2
-		echo_failure; echo; exit 1
+		echo -n "No akmod packages found, nothing to do." >&2
+		echo_success; echo; exit 1
 	fi
 
 
@@ -357,7 +357,7 @@ check_kmods()
 		if ! check_kmod_up2date ${this_kernelver} ${this_kmodname} ; then
 			# okay, kmod wasn't found or is not up2date
 			if [[ "${continue_line}" ]]; then
-				akmods_echo 1 2 --warning
+				akmods_echo 1 2 --success 
 				# if the files for building modules are not avilable don't even try to build modules
 				if [[ ! -r /usr/src/kernels/"${this_kernelver}"/Makefile ]] || [[ ! -r  /lib/modules/${this_kernelver}/build/Makefile ]]; then
 					akmods_echo 1 2 "Files needed for building modules against kernel"

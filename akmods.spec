@@ -1,6 +1,6 @@
 Name:           akmods
-Version:        0.3.3
-Release:        2%{?dist}
+Version:        0.3.4
+Release:        1%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 Group:          System Environment/Kernel
@@ -101,6 +101,9 @@ fi
 %{_mandir}/man1/*
 
 %changelog
+* Sun Jan 11 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info - 0.3.4-1
+- update to 0.3.4, which has some cosmetic changes
+
 * Thu Oct 02 2008 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info - 0.3.3-2
 - rebuild for rpm fusion
 
