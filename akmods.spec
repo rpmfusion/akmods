@@ -1,5 +1,5 @@
 Name:           akmods
-Version:        0.3.4
+Version:        0.3.5
 Release:        1%{?dist}
 Summary:        Automatic kmods build and install tool 
 
@@ -101,6 +101,9 @@ fi
 %{_mandir}/man1/*
 
 %changelog
+* Thu Jan 29 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info - 0.3.5-1
+- update to 0.3.5, fixes #340
+
 * Sun Jan 11 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info - 0.3.4-1
 - update to 0.3.4, which has some cosmetic changes
 
