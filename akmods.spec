@@ -1,5 +1,5 @@
 Name:           akmods
-Version:        0.3.5
+Version:        0.3.6
 Release:        1%{?dist}
 Summary:        Automatic kmods build and install tool 
 
@@ -16,8 +16,10 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch:      noarch
 
+# not picked up automatically
+Requires:       %{_bindir}/nohup
+
 # needed for actually building kmods:
-#Requires:       %{_bindir}/inotifywait
 Requires:       %{_bindir}/rpmdev-vercmp
 Requires:       kmodtool >= 1-9
 
@@ -101,6 +103,13 @@ fi
 %{_mandir}/man1/*
 
 %changelog
+* Sun Feb 01 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info - 0.3.6-1
+- update to 0.3.6
+-- better posttrans support
+-- remove some leftovers from daemon stuff
+-- fix a few minor bugs
+-- use lockfile
+
 * Thu Jan 29 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info - 0.3.5-1
 - update to 0.3.5, fixes #340
 

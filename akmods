@@ -27,12 +27,12 @@
 #
 # ToDo:
 # - use yum on install required kernel-devel pacakges?
-# - subprocess on dameon stop?
 # - better way to detect if a earlier build failed or succeed
-# - manpage
-# - make use of the new posttrans hook in kenrel package?
-# - locking?
 # - special kernel "all" (all that are installed with a matching -devel package; could be called from posttrans in akmods packages)
+# - manpage
+# - make it configurable if kmod building is done with nohup
+# - check on shutdown if akmods is still running and let it finish before continuing
+# - make it configurable if kmod from the repo replace local ones
 
 # global vars
 myprog="akmods"
@@ -54,7 +54,7 @@ akmods_echo()
 	shift
 
 	# output to console
-	if [[ ! ${daemon} ]] && (( ${verboselevel} >= ${this_verbose} )) ; then
+	if (( ${verboselevel} >= ${this_verbose} )) ; then
 		if [[ "${1}" == "--success" ]] ; then
 			echo_success
 			continue_line=""
@@ -100,10 +100,10 @@ finally()
 	# remove tmpfiles
 	remove_tmpdir
 
-	# remove pidfile
-	[[ "${daemon}" ]] && rm -f /var/run/${myprog}.pid
+	# remove lockfile
+	rm -f /var/cache/akmods/.lockfile
 
-	exit 128
+	exit ${1:-128}
 }
 trap "finally" ABRT EXIT HUP INT QUIT
 
@@ -152,7 +152,7 @@ init ()
 		kernels="$(uname -r)"
 	fi
 
-	# we get the echo_{success,failure} stuff and the daemon method from there
+	# we get the echo_{success,failure} stuff from there
 	if [[ -r /etc/rc.d/init.d/functions ]]; then
 		source /etc/rc.d/init.d/functions
 	else
@@ -192,12 +192,15 @@ init ()
 	fi
 
 	# tools needed
-	for tool in akmodsbuild chown sed rpmdev-vercmp; do
+	for tool in akmodsbuild chown lockfile sed rpmdev-vercmp; do
 		if ! which "${tool}" &> /dev/null ; then
 			echo -n "${tool} not found" >&2
 			echo_failure; echo; exit 1
 		fi
 	done
+
+	# create lockfile and wait till we get it
+	lockfile -s 2 -l 1800 "/var/cache/akmods/.lockfile"
 }
 
 buildinstall_kmod()
@@ -418,10 +421,10 @@ while [ "${1}" ] ; do
 			if [[ ! "${1}" ]] ; then
 				echo "ERROR: Please provide the kernel-version to build for together with --kernel" >&2
 				exit 1
-			elif [[ ! -r /usr/src/kernels/"${1}"/Makefile ]] || [[ ! -r  /lib/modules/${1}/build/Makefile ]]; then
+			elif [[ ! -r /usr/src/kernels/"${1}"/Makefile ]] && [[ ! -r /lib/modules/${1}/build/Makefile ]]; then
 				echo "Could not find files needed to compile modules for ${1}"
 				exit 1
-			elif [[ -r /usr/src/kernels/"${1}"/Makefile ]] && [[ ! -r  /boot/vmlinuz-"${1}" ]]; then
+			elif [[ -r /usr/src/kernels/"${1}"/Makefile ]] && [[ ! -r /boot/vmlinuz-"${1}" ]]; then
 				# this is a red hat / fedora kernel-devel package, but the kernel for it is not installed
 				# kmodtool would adds a dep on that kernel when building; thus when we'd try to install the 
 				# rpms we'd run into a missing-dep problem. Thus we prevent that case
@@ -453,8 +456,13 @@ while [ "${1}" ] ; do
 			alwaystry=true
 			shift
 			;;
-		--from-posttrans|--from-init|--from-akmod)
-			# does nothing (yet!)
+		--from-init)
+			# just in case: remove stale lockfile is it exists:
+			rm -f /var/cache/akmods/.lockfile
+			shift
+			;;
+		--from-posttrans|--from-kernel-posttrans|--from-akmod-posttrans)
+			# ignored
 			shift
 			;;
 		--verbose)
@@ -490,4 +498,4 @@ for kernel in ${kernels} ; do
 done
 
 # finished :)
-finally
+finally 0
