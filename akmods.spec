@@ -1,6 +1,6 @@
 Name:           akmods
 Version:        0.3.6
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 Group:          System Environment/Kernel
@@ -103,6 +103,9 @@ fi
 %{_mandir}/man1/*
 
 %changelog
+* Sun Mar 29 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info> - 0.3.6-2
+- rebuild for new F11 features
+
 * Sun Feb 01 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info - 0.3.6-1
 - update to 0.3.6
 -- better posttrans support
