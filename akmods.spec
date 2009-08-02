@@ -1,6 +1,6 @@
 Name:           akmods
 Version:        0.3.6
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 Group:          System Environment/Kernel
@@ -18,6 +18,7 @@ BuildArch:      noarch
 
 # not picked up automatically
 Requires:       %{_bindir}/nohup
+Requires:       %{_bindir}/lockfile
 
 # needed for actually building kmods:
 Requires:       %{_bindir}/rpmdev-vercmp
@@ -103,6 +104,9 @@ fi
 %{_mandir}/man1/*
 
 %changelog
+* Sun Aug 02 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info> - 0.3.6-3
+- add lockfile as hard dep
+
 * Sun Mar 29 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info> - 0.3.6-2
 - rebuild for new F11 features
 
