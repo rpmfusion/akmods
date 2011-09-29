@@ -17,8 +17,8 @@ Rebuilds kmod-SRPMs for kernels
 .PP
 .nf
 .fam C
-   Build the kmod for kernels in list; try to build for the current kernel
-   (e.g. output from 'uname -r') if option is not used.
+   Build the kmod for kernels in list; try to build for the current
+   kernel (e.g. output from 'uname -r') if option is not used.
 
 .fam T
 .fi
@@ -82,9 +82,11 @@ To compile the kmod SRPMs ndiswrapper-kmod-1.52-1.lvn9.1.src.rpm and madwifi-kmo
 .PP
 .nf
 .fam C
-      $ akmodsbuild /usr/src/akmods/ndiswrapper-kmod-1.52-1.lvn9.1.src.rpm /usr/src/akmods/madwifi-kmod-0.9.4-2.lvn9.src.rpm
+$ akmodsbuild /usr/src/akmods/ndiswrapper-kmod-1.52-1.lvn9.1.src.rpm /usr/src/akmods/madwifi-kmod-0.9.4-2.lvn9.src.rpm
 
 .SH BUGS
-None know, but there are likely some
+https://bugzilla.rpmfusion.org/buglist.cgi?product=Fedora&component=akmods&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED
 .SH AUTHOR
 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info>
+.SH MAINTAINER
+Richard Shaw <hobbes1069 [AT] gmail [DOT] com>

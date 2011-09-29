@@ -1,24 +1,25 @@
 Name:           akmods
-Version:        0.3.6
-Release:        3%{?dist}
+Version:        0.3.7
+Release:        1%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 Group:          System Environment/Kernel
 License:        MIT
 URL:            http://rpmfusion.org/Packaging/KernelModules/Akmods
 Source0:        akmods
-#to be written: Source1:        akmods.1
+# To be written
+#Source1:        akmods.1
 Source2:        akmodsbuild
 Source3:        akmodsbuild.1
 Source4:        akmodsinit
 Source6:        akmodsposttrans
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch:      noarch
 
 # not picked up automatically
 Requires:       %{_bindir}/nohup
-Requires:       %{_bindir}/lockfile
+Requires:       %{_bindir}/flock
+Requires:       %{_bindir}/time
 
 # needed for actually building kmods:
 Requires:       %{_bindir}/rpmdev-vercmp
@@ -57,19 +58,15 @@ echo nothing to build
 
 
 %install
-rm -rf $RPM_BUILD_ROOT
-mkdir -p \
-   $RPM_BUILD_ROOT/%{_usrsrc}/akmods/ \
-   $RPM_BUILD_ROOT/%{_localstatedir}/cache/akmods/
-install -D -p -m 0755 %{SOURCE0} $RPM_BUILD_ROOT/%{_sbindir}/akmods
-install -D -p -m 0755 %{SOURCE2} $RPM_BUILD_ROOT/%{_bindir}/akmodsbuild
-install -D -p -m 0644 %{SOURCE3} ${RPM_BUILD_ROOT}%{_mandir}/man1/akmodsbuild.1
-install -D -p -m 0755 %{SOURCE4} $RPM_BUILD_ROOT/%{_initrddir}/akmods
+mkdir -p %{buildroot}%{_usrsrc}/akmods/ \
+         %{buildroot}%{_localstatedir}/cache/akmods/
+install -D -p -m 0755 %{SOURCE0} %{buildroot}%{_sbindir}/akmods
+install -D -p -m 0755 %{SOURCE2} %{buildroot}%{_bindir}/akmodsbuild
+install -D -p -m 0644 %{SOURCE3} %{buildroot}%{_mandir}/man1/akmodsbuild.1
+install -D -p -m 0755 %{SOURCE4} %{buildroot}%{_initrddir}/akmods
 # %%{_sysconfdir}/kernel/posttrans.d/ should be owned my mkinitrd #441111
-install -D -p -m 0755 %{SOURCE6} $RPM_BUILD_ROOT/%{_sysconfdir}/kernel/postinst.d/akmods
+install -D -p -m 0755 %{SOURCE6} %{buildroot}/%{_sysconfdir}/kernel/postinst.d/akmods
 
-%clean
-rm -rf $RPM_BUILD_ROOT
 
 %pre
 # create group and user
@@ -94,16 +91,26 @@ fi
 
 
 %files 
-%defattr(-,root,root,-)
 %{_usrsrc}/akmods
-%{_localstatedir}/cache/akmods/
+%attr(-,akmods,akmods) %{_localstatedir}/cache/akmods
 %{_bindir}/akmodsbuild
 %{_sbindir}/akmods
 %{_initrddir}/akmods
 %{_sysconfdir}/kernel/postinst.d/akmods
 %{_mandir}/man1/*
 
+
 %changelog
+* Fri Sep 23 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.7-1
+- Update to 0.3.7
+- Fixes #1805. Version check is now properly based on rpmdev-vercmp exit code.
+- Fixes #1813. Exit code is now 0 on success for systemd compatability.
+- Fixes #485. Change from "lockfile" to "flock" for lockfile management to
+  remove dependency on procmail.
+- Fixes #773. Added /usr/bin/time as a requirement.
+- Fixes #1592.
+- Fixes #1930. "/var/cache/akmods" is now owned by the akmods user. 
+
 * Sun Aug 02 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info> - 0.3.6-3
 - add lockfile as hard dep
 
