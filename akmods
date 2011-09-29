@@ -36,7 +36,7 @@
 
 # global vars
 myprog="akmods"
-myver="0.3.5"
+myver="0.3.7"
 kmodlogfile=
 continue_line=""
 tmpdir=
@@ -105,7 +105,7 @@ finally()
 
 	exit ${1:-128}
 }
-trap "finally" ABRT EXIT HUP INT QUIT
+trap "finally" ABRT HUP INT QUIT
 
 create_tmpdir()
 {
@@ -192,7 +192,7 @@ init ()
 	fi
 
 	# tools needed
-	for tool in akmodsbuild chown lockfile sed rpmdev-vercmp; do
+	for tool in akmodsbuild chown flock sed rpmdev-vercmp; do
 		if ! which "${tool}" &> /dev/null ; then
 			echo -n "${tool} not found" >&2
 			echo_failure; echo; exit 1
@@ -200,7 +200,8 @@ init ()
 	done
 
 	# create lockfile and wait till we get it
-	lockfile -s 2 -l 1800 "/var/cache/akmods/.lockfile"
+	exec 99>/var/lock/subsys/akmods
+	flock -w 900 99
 }
 
 buildinstall_kmod()
@@ -277,15 +278,15 @@ buildinstall_kmod()
 
 	# everything fine?
 	if (( ${returncode} != 0 )); then
-			if [[ "${continue_line}" ]]; then
-				akmods_echo 1 2 --failure
-			fi
-			akmods_echo 2 1 "Could not install newly built RPMs. You can find them and the logfile"
-			akmods_echo 2 1 "${this_kmodverrel}-for-${this_kernelver}.failed.log in /var/cache/akmods/${this_kmodname}/"
-			cp -fl "${kmodlogfile}" "/var/cache/akmods/${this_kmodname}/${this_kmodverrel}-for-${this_kernelver}.failed.log"
-			kmodlogfile=""
-			remove_tmpdir
-			return 8
+		if [[ "${continue_line}" ]]; then
+			akmods_echo 1 2 --failure
+		fi
+		akmods_echo 2 1 "Could not install newly built RPMs. You can find them and the logfile"
+		akmods_echo 2 1 "${this_kmodverrel}-for-${this_kernelver}.failed.log in /var/cache/akmods/${this_kmodname}/"
+		cp -fl "${kmodlogfile}" "/var/cache/akmods/${this_kmodname}/${this_kmodverrel}-for-${this_kernelver}.failed.log"
+		kmodlogfile=""
+		remove_tmpdir
+		return 8
 	fi
 
 	# finish
@@ -319,21 +320,21 @@ check_kmod_up2date()
 	local kmodver=$(rpm -q --qf '%{EPOCH}:%{VERSION}-%{RELEASE}\n' "${kmodpackage}" | sed 's|(none)|0|; s!\.\(fc\|lvn\)[0-9]*!!g')
 	local akmodver=$(rpm -qp --qf '%{EPOCH}:%{VERSION}-%{RELEASE}\n' /usr/src/akmods/"${this_kmodname}"-kmod.latest | sed 's|(none)|0|; s!\.\(fc\|lvn\)[0-9]*!!g')
 
-	# are they equal?
-	if [[ "${kmodver}" == "${akmodver}" ]]; then
+	rpmdev-vercmp "${kmodver}" "${akmodver}" &>/dev/null
+	if [ "$?" == 0 ]; then
+		# Versions are the same. Nothing to do.
 		return 0
-	fi
-	
-	local newestpkgver=$(rpmdev-vercmp "${kmodver}" "${akmodver}" 2>/dev/null | awk '{print $1}')
-	if [[ ! "${kmodver}" ]] || [[ ! "${akmodver}" ]] || [[ ! "${newestpkgver}" ]] ; then
-		# seems we didn't get what we wanted
-		# well, better to do nothing in this case
-		akmods_echo 1 2 -n "Warning: Could not determine if akmod is newer then the installed kmod"
+	elif [ "$?" == 11 ]; then
+		# kmod is newer, this nomally shouldn't happen.
+		akmods_echo 1 2 -n "Warning: installed kmod is newer then the akmod"
 		return 0
-	elif [[ "${akmodver}" == "${newestpkgver}" ]] ; then
-		# build it
+	elif [ "$?" == 12 ]; then
+		# akmod is newer, need to build kmod.
 		return 1
 	else
+		# Something went wrong
+		akmods_echo 1 2 -n "Error: Could not determine if akmod is newer then the installed kmod"
+		akmods_echo 1 2 --failure
 		return 0
 	fi
 }
@@ -362,7 +363,8 @@ check_kmods()
 			if [[ "${continue_line}" ]]; then
 				akmods_echo 1 2 --success 
 				# if the files for building modules are not avilable don't even try to build modules
-				if [[ ! -r /usr/src/kernels/"${this_kernelver}"/Makefile ]] || [[ ! -r  /lib/modules/${this_kernelver}/build/Makefile ]]; then
+				if [[ ! -r /usr/src/kernels/"${this_kernelver}"/Makefile ]] && \
+				   [[ ! -r /lib/modules/${this_kernelver}/build/Makefile ]]; then
 					akmods_echo 1 2 "Files needed for building modules against kernel"
 					akmods_echo 1 2 "${this_kernelver} could not be found as the following" 
 					akmods_echo 1 2 "directories are missing:" 
@@ -421,10 +423,12 @@ while [ "${1}" ] ; do
 			if [[ ! "${1}" ]] ; then
 				echo "ERROR: Please provide the kernel-version to build for together with --kernel" >&2
 				exit 1
-			elif [[ ! -r /usr/src/kernels/"${1}"/Makefile ]] && [[ ! -r /lib/modules/${1}/build/Makefile ]]; then
+			elif [[ ! -r /usr/src/kernels/"${1}"/Makefile ]] && \
+			     [[ ! -r /lib/modules/${1}/build/Makefile ]]; then
 				echo "Could not find files needed to compile modules for ${1}"
 				exit 1
-			elif [[ -r /usr/src/kernels/"${1}"/Makefile ]] && [[ ! -r /boot/vmlinuz-"${1}" ]]; then
+			elif [[ -r /usr/src/kernels/"${1}"/Makefile ]] && \
+			     [[ ! -r /boot/vmlinuz-"${1}" ]]; then
 				# this is a red hat / fedora kernel-devel package, but the kernel for it is not installed
 				# kmodtool would adds a dep on that kernel when building; thus when we'd try to install the 
 				# rpms we'd run into a missing-dep problem. Thus we prevent that case
@@ -457,7 +461,7 @@ while [ "${1}" ] ; do
 			shift
 			;;
 		--from-init)
-			# just in case: remove stale lockfile is it exists:
+			# just in case: remove stale lockfile if it exists:
 			rm -f /var/cache/akmods/.lockfile
 			shift
 			;;
@@ -494,7 +498,7 @@ init
 
 # go
 for kernel in ${kernels} ; do
-		check_kmods ${kernel}
+	check_kmods ${kernel}
 done
 
 # finished :)
