@@ -1,6 +1,6 @@
 Name:           akmods
 Version:        0.3.7
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 Group:          System Environment/Kernel
@@ -101,6 +101,9 @@ fi
 
 
 %changelog
+* Tue Nov 15 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.7-2
+- Fix rpmdev-vercmp handling.
+
 * Fri Sep 23 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.7-1
 - Update to 0.3.7
 - Fixes #1805. Version check is now properly based on rpmdev-vercmp exit code.
