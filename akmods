@@ -321,14 +321,15 @@ check_kmod_up2date()
 	local akmodver=$(rpm -qp --qf '%{EPOCH}:%{VERSION}-%{RELEASE}\n' /usr/src/akmods/"${this_kmodname}"-kmod.latest | sed 's|(none)|0|; s!\.\(fc\|lvn\)[0-9]*!!g')
 
 	rpmdev-vercmp "${kmodver}" "${akmodver}" &>/dev/null
-	if [ "$?" == 0 ]; then
+	local retvalue=$?
+	if [ "$retvalue" == 0 ]; then
 		# Versions are the same. Nothing to do.
 		return 0
-	elif [ "$?" == 11 ]; then
+	elif [ "$retvalue" == 11 ]; then
 		# kmod is newer, this nomally shouldn't happen.
 		akmods_echo 1 2 -n "Warning: installed kmod is newer then the akmod"
 		return 0
-	elif [ "$?" == 12 ]; then
+	elif [ "$retvalue" == 12 ]; then
 		# akmod is newer, need to build kmod.
 		return 1
 	else
@@ -370,6 +371,7 @@ check_kmods()
 					akmods_echo 1 2 "directories are missing:" 
 					akmods_echo 1 2 "/usr/src/kernels/${this_kernelver}/" 
 					akmods_echo 1 2 -n "/lib/modules/${this_kernelver}/build/" 
+					akmods_echo 1 2 "Is the correct kernel-devel package installed?"
 					akmods_echo 1 2 --failure
 					return 1
 				fi
