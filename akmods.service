@@ -1,10 +1,10 @@
 [Unit]
 Description=Builds and install new kmods from akmod packages
-After=syslog.target
 Before=prefdm.service
 
 [Service]
 Type=oneshot
+RemainAfterExit=yes
 ExecStart=-/usr/sbin/akmods --from-init
 
 [Install]

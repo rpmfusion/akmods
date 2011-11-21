@@ -87,7 +87,7 @@ akmods_echo()
 	fi
 
 	# global logfile
-	echo "$(date +%d\ %b\ %H:%M:%S) akmods: $@" >> "/var/cache/akmods/akmods.log"
+	echo "$(date +%d\ %b\ %H:%M:%S) akmods: $@" >> "/var/log/akmods.log"
 
 	# the kmods logfile as well, if we work on a kmod
 	if [[ "${kmodlogfile}" ]]; then
@@ -334,8 +334,8 @@ check_kmod_up2date()
 		return 1
 	else
 		# Something went wrong
-		akmods_echo 1 2 -n "Error: Could not determine if akmod is newer then the installed kmod"
-		akmods_echo 1 2 --failure
+		akmods_echo 2 1 -n "Error: Could not determine if akmod is newer then the installed kmod"
+		akmods_echo 2 1 --failure
 		return 0
 	fi
 }

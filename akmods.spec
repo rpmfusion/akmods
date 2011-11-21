@@ -1,5 +1,5 @@
 Name:           akmods
-Version:        0.3.7
+Version:        0.3.8
 Release:        2%{?dist}
 Summary:        Automatic kmods build and install tool 
 
@@ -101,6 +101,11 @@ fi
 
 
 %changelog
+* Mon Nov 21 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.8-2
+- Add hint about kernel-devel package if rebuild fails due to lack of required
+  development files.
+- Move logging from /var/cache/akmods/akmods.log to /var/log/akmods.log.
+
 * Tue Nov 15 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.7-2
 - Fix rpmdev-vercmp handling.
 
