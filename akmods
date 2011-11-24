@@ -36,7 +36,7 @@
 
 # global vars
 myprog="akmods"
-myver="0.3.7"
+myver="0.3.8"
 kmodlogfile=
 continue_line=""
 tmpdir=
@@ -87,7 +87,7 @@ akmods_echo()
 	fi
 
 	# global logfile
-	echo "$(date +%d\ %b\ %H:%M:%S) akmods: $@" >> "/var/log/akmods.log"
+	echo "$(date +%d\ %b\ %H:%M:%S) akmods: $@" >> "/var/cache/akmods/akmods.log"
 
 	# the kmods logfile as well, if we work on a kmod
 	if [[ "${kmodlogfile}" ]]; then
@@ -326,16 +326,15 @@ check_kmod_up2date()
 		# Versions are the same. Nothing to do.
 		return 0
 	elif [ "$retvalue" == 11 ]; then
-		# kmod is newer, this nomally shouldn't happen.
-		akmods_echo 1 2 -n "Warning: installed kmod is newer then the akmod"
+		# kmod is newer, nothing to do.
 		return 0
 	elif [ "$retvalue" == 12 ]; then
 		# akmod is newer, need to build kmod.
 		return 1
 	else
 		# Something went wrong
-		akmods_echo 2 1 -n "Error: Could not determine if akmod is newer then the installed kmod"
-		akmods_echo 2 1 --failure
+		akmods_echo 1 2 -n "Error: Could not determine if akmod is newer than the installed kmod"
+		akmods_echo 1 2 --failure
 		return 0
 	fi
 }
@@ -371,7 +370,7 @@ check_kmods()
 					akmods_echo 1 2 "directories are missing:" 
 					akmods_echo 1 2 "/usr/src/kernels/${this_kernelver}/" 
 					akmods_echo 1 2 -n "/lib/modules/${this_kernelver}/build/" 
-					akmods_echo 1 2 "Is the correct kernel-devel package installed?"
+					akmods_echo 1 2 -n "Is the correct kernel-devel package installed?"
 					akmods_echo 1 2 --failure
 					return 1
 				fi
