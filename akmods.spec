@@ -39,7 +39,7 @@ Requires:       kernel-devel
 # we create a special user that used by akmods to build kmod packages
 Requires(pre):  shadow-utils
 
-%if %fedora <=16
+%if %fedora <= 15
 # for the akmods init script:
 Requires(post):  /sbin/chkconfig
 Requires(preun): /sbin/chkconfig
@@ -73,7 +73,7 @@ mkdir -p %{buildroot}%{_usrsrc}/akmods/ \
 install -D -p -m 0755 %{SOURCE0} %{buildroot}%{_sbindir}/akmods
 install -D -p -m 0755 %{SOURCE2} %{buildroot}%{_bindir}/akmodsbuild
 install -D -p -m 0644 %{SOURCE3} %{buildroot}%{_mandir}/man1/akmodsbuild.1
-%if %fedora <=16
+%if %fedora <= 15
 install -D -p -m 0755 %{SOURCE4} %{buildroot}%{_initrddir}/akmods
 %else
 install -D -p -m 0644 %{SOURCE7} %{buildroot}%{_unitdir}/akmods.service
@@ -90,7 +90,7 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
     -c "User is used by akmods to build akmod packages" akmods
 
 %post
-%if %fedora <=16
+%if %fedora <= 15
 # add init script
 /sbin/chkconfig --add akmods
 # enable init script; users that installed akmods directly or indirectly
@@ -107,7 +107,7 @@ fi
 %endif
 
 %preun
-%if %fedora <=16
+%if %fedora <= 15
 if [ $1 = 0 ]; then
    /sbin/chkconfig --del akmods
 fi
@@ -125,7 +125,7 @@ fi
 %attr(-,akmods,akmods) %{_localstatedir}/cache/akmods
 %{_bindir}/akmodsbuild
 %{_sbindir}/akmods
-%if %fedora <=16
+%if %fedora <= 15
 %{_initrddir}/akmods
 %else
 %{_unitdir}/akmods.service
