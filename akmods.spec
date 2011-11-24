@@ -1,6 +1,6 @@
 Name:           akmods
-Version:        0.3.7
-Release:        2%{?dist}
+Version:        0.3.8
+Release:        3%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 Group:          System Environment/Kernel
@@ -13,6 +13,7 @@ Source2:        akmodsbuild
 Source3:        akmodsbuild.1
 Source4:        akmodsinit
 Source6:        akmodsposttrans
+Source7:        akmods.service
 
 BuildArch:      noarch
 
@@ -38,10 +39,19 @@ Requires:       kernel-devel
 # we create a special user that used by akmods to build kmod packages
 Requires(pre):  shadow-utils
 
+%if %fedora <=16
 # for the akmods init script:
 Requires(post):  /sbin/chkconfig
 Requires(preun): /sbin/chkconfig
 Requires(preun): /sbin/service
+
+%else
+# systemd unit requirements.
+BuildRequires:  systemd-units
+Requires(post): systemd-units
+Requires(preun): systemd-units
+Requires(postun): systemd-units
+%endif
 
 
 %description
@@ -63,7 +73,11 @@ mkdir -p %{buildroot}%{_usrsrc}/akmods/ \
 install -D -p -m 0755 %{SOURCE0} %{buildroot}%{_sbindir}/akmods
 install -D -p -m 0755 %{SOURCE2} %{buildroot}%{_bindir}/akmodsbuild
 install -D -p -m 0644 %{SOURCE3} %{buildroot}%{_mandir}/man1/akmodsbuild.1
+%if %fedora <=16
 install -D -p -m 0755 %{SOURCE4} %{buildroot}%{_initrddir}/akmods
+%else
+install -D -p -m 0644 %{SOURCE7} %{buildroot}%{_unitdir}/akmods.service
+%endif
 # %%{_sysconfdir}/kernel/posttrans.d/ should be owned my mkinitrd #441111
 install -D -p -m 0755 %{SOURCE6} %{buildroot}/%{_sysconfdir}/kernel/postinst.d/akmods
 
@@ -76,6 +90,7 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
     -c "User is used by akmods to build akmod packages" akmods
 
 %post
+%if %fedora <=16
 # add init script
 /sbin/chkconfig --add akmods
 # enable init script; users that installed akmods directly or indirectly
@@ -83,11 +98,26 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
 if [ $1 = 1 ]; then
    /sbin/chkconfig akmods on
 fi
+%else
+# Systemd
+if [ $1 -eq 1 ] ; then 
+    # Initial installation
+    /bin/systemctl enable akmods.service >/dev/null 2>&1 || :
+fi
+%endif
 
 %preun
+%if %fedora <=16
 if [ $1 = 0 ]; then
    /sbin/chkconfig --del akmods
 fi
+%else
+if [ $1 -eq 0 ] ; then
+    # Package removal, not upgrade
+    /bin/systemctl --no-reload disable akmods.service > /dev/null 2>&1 || :
+    /bin/systemctl stop akmods.service > /dev/null 2>&1 || :
+fi
+%endif
 
 
 %files 
@@ -95,14 +125,23 @@ fi
 %attr(-,akmods,akmods) %{_localstatedir}/cache/akmods
 %{_bindir}/akmodsbuild
 %{_sbindir}/akmods
+%if %fedora <=16
 %{_initrddir}/akmods
+%else
+%{_unitdir}/akmods.service
+%endif
 %{_sysconfdir}/kernel/postinst.d/akmods
 %{_mandir}/man1/*
 
 
 %changelog
-* Tue Nov 15 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.7-2
-- Fix rpmdev-vercmp handling.
+* Tue Nov 24 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.8-3
+- Kmod can be newer than akmod due to rebuilds for new kernels (#2063)
+
+* Mon Nov 21 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.8-2
+- Add hint about kernel-devel package if rebuild fails due to lack of required
+  development files.
+- Move logging from /var/cache/akmods/akmods.log to /var/log/akmods.log.
 
 * Fri Sep 23 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.7-1
 - Update to 0.3.7
