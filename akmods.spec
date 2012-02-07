@@ -1,6 +1,6 @@
 Name:           akmods
-Version:        0.3.8
-Release:        3%{?dist}.1
+Version:        0.4.0
+Release:        1%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 Group:          System Environment/Kernel
@@ -30,28 +30,18 @@ Requires:       kmodtool >= 1-9
 Requires:       bzip2 coreutils diffutils file findutils gawk gcc grep
 Requires:       gzip perl make sed tar unzip util-linux which rpm-build
 
-# do we need akmods-{xen,PAE,foo,bar} packages that depend on the proper
-# kernel-devel package? Well, maybe later; for now we just go with the 
-# easy variant; note that the requires is weak in any case, as a older
-# kernel-devel package can provice it as well :-/ 
-Requires:       kernel-devel
+# We use a virtual provide that would match either
+# kernel-devel or kernel-PAE-devel
+Requires:       kernel-devel-uname-r
 
 # we create a special user that used by akmods to build kmod packages
 Requires(pre):  shadow-utils
 
-%if %fedora <= 15
-# for the akmods init script:
-Requires(post):  /sbin/chkconfig
-Requires(preun): /sbin/chkconfig
-Requires(preun): /sbin/service
-
-%else
 # systemd unit requirements.
 BuildRequires:  systemd-units
 Requires(post): systemd-units
 Requires(preun): systemd-units
 Requires(postun): systemd-units
-%endif
 
 
 %description
@@ -90,34 +80,18 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
     -c "User is used by akmods to build akmod packages" akmods
 
 %post
-%if %fedora <= 15
-# add init script
-/sbin/chkconfig --add akmods
-# enable init script; users that installed akmods directly or indirectly
-# want it to work
-if [ $1 = 1 ]; then
-   /sbin/chkconfig akmods on
-fi
-%else
 # Systemd
 if [ $1 -eq 1 ] ; then 
     # Initial installation
     /bin/systemctl enable akmods.service >/dev/null 2>&1 || :
 fi
-%endif
 
 %preun
-%if %fedora <= 15
-if [ $1 = 0 ]; then
-   /sbin/chkconfig --del akmods
-fi
-%else
 if [ $1 -eq 0 ] ; then
     # Package removal, not upgrade
     /bin/systemctl --no-reload disable akmods.service > /dev/null 2>&1 || :
     /bin/systemctl stop akmods.service > /dev/null 2>&1 || :
 fi
-%endif
 
 
 %files 
@@ -125,18 +99,16 @@ fi
 %attr(-,akmods,akmods) %{_localstatedir}/cache/akmods
 %{_bindir}/akmodsbuild
 %{_sbindir}/akmods
-%if %fedora <= 15
-%{_initrddir}/akmods
-%else
 %{_unitdir}/akmods.service
-%endif
 %{_sysconfdir}/kernel/postinst.d/akmods
 %{_mandir}/man1/*
 
 
 %changelog
-* Wed Feb 01 2012 Nicolas Chauvet <kwizart@gmail.com> - 0.3.8-3.1
-- AkmodUsrMove
+* Tue Feb 07 2012 Nicolas Chauvet <kwizart@gmail.com> - 0.4.0-1
+- Update for UsrMove support
+- Remove unused references to older fedora
+- Change Requires from kernel-devel to kernel-devel-uname-r
 
 * Tue Nov 24 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.8-3
 - Kmod can be newer than akmod due to rebuilds for new kernels (#2063)
