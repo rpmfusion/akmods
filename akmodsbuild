@@ -44,12 +44,12 @@ init ()
 
 	# do we have everything we need to build for the kernels in question?
 	for kernel in ${kernels}; do
-		if [[ ! -e /usr/src/kernels/${kernel}/Makefile ]] && [[ ! -e /lib/modules/${kernel}/build/Makefile ]]; then
+		if [[ ! -e /usr/src/kernels/${kernel}/Makefile ]] && [[ ! -e /usr/lib/modules/${kernel}/build/Makefile ]]; then
 			echo "ERROR: Files needed for building modules against kernel" >&2
 			echo " ${kernel} could not be found as the following" >&2
 			echo " directories are missing:"
 			echo " /usr/src/kernels/${kernel}/" >&2
-			echo " /lib/modules/${kernel}/build/" >&2
+			echo " /usr/lib/modules/${kernel}/build/" >&2
 			exit 2
 		fi
 	done

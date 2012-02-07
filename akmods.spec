@@ -1,6 +1,6 @@
 Name:           akmods
 Version:        0.3.8
-Release:        3%{?dist}
+Release:        3%{?dist}.1
 Summary:        Automatic kmods build and install tool 
 
 Group:          System Environment/Kernel
@@ -135,6 +135,9 @@ fi
 
 
 %changelog
+* Wed Feb 01 2012 Nicolas Chauvet <kwizart@gmail.com> - 0.3.8-3.1
+- AkmodUsrMove
+
 * Tue Nov 24 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.8-3
 - Kmod can be newer than akmod due to rebuilds for new kernels (#2063)
 

@@ -304,17 +304,17 @@ check_kmod_up2date()
 	local this_kmodname=${2}
 
 	# kmod present?
-	if [[ ! -d /lib/modules/${this_kernelver}/extra/${this_kmodname}/ ]] ; then
+	if [[ ! -d /usr/lib/modules/${this_kernelver}/extra/${this_kmodname}/ ]] ; then
 		# build it
 		return 1
 	fi
 
 	# kmod up2date? 
-	local kmodpackage="$(rpm -qf /lib/modules/${this_kernelver}/extra/${this_kmodname}/ 2> /dev/null)"
+	local kmodpackage="$(rpm -qf /usr/lib/modules/${this_kernelver}/extra/${this_kmodname}/ 2> /dev/null)"
 	if [[ ! "${kmodpackage}" ]]; then
 		# seems we didn't get what we wanted
 		# well, better to do nothing in this case
-		akmods_echo 1 2 -n "Warning: Could not determine what package owns /lib/modules/${this_kernelver}/extra/${this_kmodname}/"
+		akmods_echo 1 2 -n "Warning: Could not determine what package owns /usr/lib/modules/${this_kernelver}/extra/${this_kmodname}/"
 		return 0
 	fi
 	local kmodver=$(rpm -q --qf '%{EPOCH}:%{VERSION}-%{RELEASE}\n' "${kmodpackage}" | sed 's|(none)|0|; s!\.\(fc\|lvn\)[0-9]*!!g')
@@ -364,12 +364,12 @@ check_kmods()
 				akmods_echo 1 2 --success 
 				# if the files for building modules are not avilable don't even try to build modules
 				if [[ ! -r /usr/src/kernels/"${this_kernelver}"/Makefile ]] && \
-				   [[ ! -r /lib/modules/${this_kernelver}/build/Makefile ]]; then
+				   [[ ! -r /usr/lib/modules/${this_kernelver}/build/Makefile ]]; then
 					akmods_echo 1 2 "Files needed for building modules against kernel"
 					akmods_echo 1 2 "${this_kernelver} could not be found as the following" 
 					akmods_echo 1 2 "directories are missing:" 
 					akmods_echo 1 2 "/usr/src/kernels/${this_kernelver}/" 
-					akmods_echo 1 2 -n "/lib/modules/${this_kernelver}/build/" 
+					akmods_echo 1 2 -n "/usr/lib/modules/${this_kernelver}/build/" 
 					akmods_echo 1 2 -n "Is the correct kernel-devel package installed?"
 					akmods_echo 1 2 --failure
 					return 1
@@ -425,7 +425,7 @@ while [ "${1}" ] ; do
 				echo "ERROR: Please provide the kernel-version to build for together with --kernel" >&2
 				exit 1
 			elif [[ ! -r /usr/src/kernels/"${1}"/Makefile ]] && \
-			     [[ ! -r /lib/modules/${1}/build/Makefile ]]; then
+			     [[ ! -r /usr/lib/modules/${1}/build/Makefile ]]; then
 				echo "Could not find files needed to compile modules for ${1}"
 				exit 1
 			elif [[ -r /usr/src/kernels/"${1}"/Makefile ]] && \
