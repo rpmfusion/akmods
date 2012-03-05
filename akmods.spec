@@ -1,19 +1,17 @@
 Name:           akmods
 Version:        0.4.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 Group:          System Environment/Kernel
 License:        MIT
 URL:            http://rpmfusion.org/Packaging/KernelModules/Akmods
 Source0:        akmods
-# To be written
-#Source1:        akmods.1
+Source1:        akmods.1
 Source2:        akmodsbuild
 Source3:        akmodsbuild.1
-Source4:        akmodsinit
-Source6:        akmodsposttrans
-Source7:        akmods.service
+Source4:        akmods.service
+Source5:        akmodsposttrans
 
 BuildArch:      noarch
 
@@ -49,6 +47,7 @@ Akmods startup script will rebuild akmod packages during system
 boot while its background daemon will build them for kernels right
 after they were installed.
 
+
 %prep
 echo nothing to prep
 
@@ -60,16 +59,12 @@ echo nothing to build
 %install
 mkdir -p %{buildroot}%{_usrsrc}/akmods/ \
          %{buildroot}%{_localstatedir}/cache/akmods/
-install -D -p -m 0755 %{SOURCE0} %{buildroot}%{_sbindir}/akmods
-install -D -p -m 0755 %{SOURCE2} %{buildroot}%{_bindir}/akmodsbuild
-install -D -p -m 0644 %{SOURCE3} %{buildroot}%{_mandir}/man1/akmodsbuild.1
-%if %fedora <= 15
-install -D -p -m 0755 %{SOURCE4} %{buildroot}%{_initrddir}/akmods
-%else
-install -D -p -m 0644 %{SOURCE7} %{buildroot}%{_unitdir}/akmods.service
-%endif
-# %%{_sysconfdir}/kernel/posttrans.d/ should be owned my mkinitrd #441111
-install -D -p -m 0755 %{SOURCE6} %{buildroot}/%{_sysconfdir}/kernel/postinst.d/akmods
+install -D -pm 0755 %{SOURCE0} %{buildroot}%{_sbindir}/akmods
+install -D -pm 0644 %{SOURCE1} %{buildroot}%{_mandir}/man1/akmods.1
+install -D -pm 0755 %{SOURCE2} %{buildroot}%{_bindir}/akmodsbuild
+install -D -pm 0644 %{SOURCE3} %{buildroot}%{_mandir}/man1/akmodsbuild.1
+install -D -pm 0644 %{SOURCE4} %{buildroot}%{_unitdir}/akmods.service
+install -D -pm 0755 %{SOURCE5} %{buildroot}%{_sysconfdir}/kernel/postinst.d/akmods
 
 
 %pre
@@ -95,16 +90,21 @@ fi
 
 
 %files 
-%{_usrsrc}/akmods
-%attr(-,akmods,akmods) %{_localstatedir}/cache/akmods
 %{_bindir}/akmodsbuild
 %{_sbindir}/akmods
-%{_unitdir}/akmods.service
 %{_sysconfdir}/kernel/postinst.d/akmods
+%{_unitdir}/akmods.service
+%{_usrsrc}/akmods
+%attr(-,akmods,akmods) %{_localstatedir}/cache/akmods
 %{_mandir}/man1/*
 
 
 %changelog
+* Mon Mar 05 2012 Richard Shaw <hobbes1069@gmail.com> - 0.4.0-2
+- Remove remaining references to previous Fedora releases
+- Remove legacy SysV init script from CVS.
+- Added man page for akmods and cleaned up man page for akmodsbuild.
+
 * Tue Feb 07 2012 Nicolas Chauvet <kwizart@gmail.com> - 0.4.0-1
 - Update for UsrMove support
 - Remove unused references to older fedora
