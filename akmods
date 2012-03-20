@@ -427,6 +427,7 @@ while [ "${1}" ] ; do
 			elif [[ ! -r /usr/src/kernels/"${1}"/Makefile ]] && \
 			     [[ ! -r /usr/lib/modules/${1}/build/Makefile ]]; then
 				echo "Could not find files needed to compile modules for ${1}"
+				echo "Are the development files for kernel ${1} or the appropriate kernel-devel package installed?"
 				exit 1
 			elif [[ -r /usr/src/kernels/"${1}"/Makefile ]] && \
 			     [[ ! -r /boot/vmlinuz-"${1}" ]]; then
