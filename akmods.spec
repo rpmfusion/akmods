@@ -1,6 +1,6 @@
 Name:           akmods
 Version:        0.4.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 Group:          System Environment/Kernel
@@ -100,6 +100,10 @@ fi
 
 
 %changelog
+* Tue Mar 20 2012 Richard Shaw <hobbes1069@gmail.com> - 0.4.0-3
+- Add additional error output if the needed kernel development files are not
+  installed. (Fixes #561)
+
 * Mon Mar 05 2012 Richard Shaw <hobbes1069@gmail.com> - 0.4.0-2
 - Remove remaining references to previous Fedora releases
 - Remove legacy SysV init script from CVS.
