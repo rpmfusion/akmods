@@ -1,6 +1,6 @@
 Name:           akmods
 Version:        0.4.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 Group:          System Environment/Kernel
@@ -100,6 +100,9 @@ fi
 
 
 %changelog
+* Thu Apr 12 2012 Nicolas Chauvet <kwizart@gmail.com> - 0.4.0-4
+- Rebuilt
+
 * Tue Mar 20 2012 Richard Shaw <hobbes1069@gmail.com> - 0.4.0-3
 - Add additional error output if the needed kernel development files are not
   installed. (Fixes #561)
