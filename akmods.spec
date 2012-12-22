@@ -1,6 +1,6 @@
 Name:           akmods
-Version:        0.4.0
-Release:        4%{?dist}
+Version:        0.5.1
+Release:        1%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 Group:          System Environment/Kernel
@@ -10,8 +10,10 @@ Source0:        akmods
 Source1:        akmods.1
 Source2:        akmodsbuild
 Source3:        akmodsbuild.1
-Source4:        akmods.service
+Source4:        akmods.service.in
 Source5:        akmodsposttrans
+Source6:        akmods-shutdown
+Source7:        akmods-shutdown.service
 
 BuildArch:      noarch
 
@@ -49,7 +51,11 @@ after they were installed.
 
 
 %prep
-echo nothing to prep
+%if 0%{?fedora} >= 18
+sed -i "s|@SERVICE@|display-manager.service|" %{SOURCE4}
+%else
+sed -i "s|@SERVICE@|prefdm.service|" %{SOURCE4}
+%endif
 
 
 %build
@@ -63,8 +69,10 @@ install -D -pm 0755 %{SOURCE0} %{buildroot}%{_sbindir}/akmods
 install -D -pm 0644 %{SOURCE1} %{buildroot}%{_mandir}/man1/akmods.1
 install -D -pm 0755 %{SOURCE2} %{buildroot}%{_bindir}/akmodsbuild
 install -D -pm 0644 %{SOURCE3} %{buildroot}%{_mandir}/man1/akmodsbuild.1
+install -D -pm 0755 %{SOURCE6} %{buildroot}%{_bindir}/akmods-shutdown
 install -D -pm 0644 %{SOURCE4} %{buildroot}%{_unitdir}/akmods.service
-install -D -pm 0755 %{SOURCE5} %{buildroot}%{_sysconfdir}/kernel/postinst.d/akmods
+install -D -pm 0644 %{SOURCE7} %{buildroot}%{_unitdir}/akmods-shutdown.service
+install -D -pm 0755 %{SOURCE5} %{buildroot}%{_sysconfdir}/kernel/postinst.d/akmodsposttrans
 
 
 %pre
@@ -79,6 +87,7 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
 if [ $1 -eq 1 ] ; then 
     # Initial installation
     /bin/systemctl enable akmods.service >/dev/null 2>&1 || :
+    /bin/systemctl enable akmods-shutdown.service >/dev/null 2>&1 || :
 fi
 
 %preun
@@ -86,20 +95,28 @@ if [ $1 -eq 0 ] ; then
     # Package removal, not upgrade
     /bin/systemctl --no-reload disable akmods.service > /dev/null 2>&1 || :
     /bin/systemctl stop akmods.service > /dev/null 2>&1 || :
+    /bin/systemctl --no-reload disable akmods-shutdown.service > /dev/null 2>&1 || :
+    /bin/systemctl stop akmods-shutdown.service > /dev/null 2>&1 || :
 fi
 
 
 %files 
 %{_bindir}/akmodsbuild
+%{_bindir}/akmods-shutdown
 %{_sbindir}/akmods
-%{_sysconfdir}/kernel/postinst.d/akmods
+%{_sysconfdir}/kernel/postinst.d/akmodsposttrans
 %{_unitdir}/akmods.service
+%{_unitdir}/akmods-shutdown.service
 %{_usrsrc}/akmods
 %attr(-,akmods,akmods) %{_localstatedir}/cache/akmods
 %{_mandir}/man1/*
 
 
 %changelog
+* Fri Jun 01 2012 Richard Shaw <hobbes1069@gmail.com> - 0.5.1-1
+- Add service file to run again on shutdown.
+- Add conditional for Fedora 18 to specify correct systemd graphical service.
+
 * Thu Apr 12 2012 Nicolas Chauvet <kwizart@gmail.com> - 0.4.0-4
 - Rebuilt
 

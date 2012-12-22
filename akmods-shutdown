@@ -1,8 +1,7 @@
-#!/bin/bash -
+#!/bin/bash
 #
-# akmodposttrans - Calls akmods for newly installed kernels
-#
-# Copyright (c) 2009 Thorsten Leemhuis <fedora@leemhuis.info>
+# akmods-shutdown - Helper script to build kernel modules on shutdown
+# Copyright (c) 2012 Richard shaw <hobbes1069@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -23,15 +22,10 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
-# todo-list:
-# - scary idea: install kernel-devel packages on demand?
-# - redirect output to a seperate logfile?
 
-# just check in case a user calls this directly
-if [[ ! -w / ]]; then
-	echo "Needs to run as root to be able to install rpms." >&2
-	exit 1
-fi
+echo "Building modules for all installed kernels."
+for kernel in /usr/src/kernels/*; do
+	kernel=$(basename $kernel)
+	/usr/sbin/akmods --force --kernels $kernel
+done
 
-# needs to run in background as rpmdb might be locked otherwise
-nohup /usr/sbin/akmods --from-kernel-posttrans --kernels ${1} &> /dev/null &
