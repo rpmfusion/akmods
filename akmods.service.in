@@ -4,7 +4,7 @@ Before=prefdm.service
 
 [Service]
 Type=oneshot
-RemainAfterExit=yes
+RemainAfterExit=true
 ExecStart=-/usr/sbin/akmods --from-init
 
 [Install]
