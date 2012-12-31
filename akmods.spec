@@ -1,6 +1,6 @@
 Name:           akmods
 Version:        0.5.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 Group:          System Environment/Kernel
@@ -51,15 +51,11 @@ after they were installed.
 
 
 %prep
-%if 0%{?fedora} >= 18
-sed -i "s|@SERVICE@|display-manager.service|" %{SOURCE4}
-%else
-sed -i "s|@SERVICE@|prefdm.service|" %{SOURCE4}
-%endif
+echo Nothing to prep.
 
 
 %build
-echo nothing to build
+echo Nothing to build.
 
 
 %install
@@ -70,9 +66,16 @@ install -D -pm 0644 %{SOURCE1} %{buildroot}%{_mandir}/man1/akmods.1
 install -D -pm 0755 %{SOURCE2} %{buildroot}%{_bindir}/akmodsbuild
 install -D -pm 0644 %{SOURCE3} %{buildroot}%{_mandir}/man1/akmodsbuild.1
 install -D -pm 0755 %{SOURCE6} %{buildroot}%{_bindir}/akmods-shutdown
-install -D -pm 0644 %{SOURCE4} %{buildroot}%{_unitdir}/akmods.service
-install -D -pm 0644 %{SOURCE7} %{buildroot}%{_unitdir}/akmods-shutdown.service
 install -D -pm 0755 %{SOURCE5} %{buildroot}%{_sysconfdir}/kernel/postinst.d/akmodsposttrans
+install -D -pm 0644 %{SOURCE7} %{buildroot}%{_unitdir}/akmods-shutdown.service
+
+%if 0%{?fedora} >= 18
+sed "s|@SERVICE@|display-manager.service|" %{SOURCE4} >\
+    %{buildroot}%{_unitdir}/akmods.service
+%else
+sed "s|@SERVICE@|prefdm.service|" %{SOURCE4} >\
+    %{buildroot}%{_unitdir}/akmods.service
+%endif
 
 
 %pre
@@ -113,7 +116,7 @@ fi
 
 
 %changelog
-* Fri Jun 01 2012 Richard Shaw <hobbes1069@gmail.com> - 0.5.1-1
+* Fri Jun 01 2012 Richard Shaw <hobbes1069@gmail.com> - 0.5.1-2
 - Add service file to run again on shutdown.
 - Add conditional for Fedora 18 to specify correct systemd graphical service.
 
