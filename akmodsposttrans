@@ -1,6 +1,6 @@
 #!/bin/bash -
 #
-# akmodposttras - Calls akmods for newly installed kernels
+# akmodposttrans - Calls akmods for newly installed kernels
 #
 # Copyright (c) 2009 Thorsten Leemhuis <fedora@leemhuis.info>
 #
