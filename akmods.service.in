@@ -1,6 +1,6 @@
 [Unit]
 Description=Builds and install new kmods from akmod packages
-Before=prefdm.service
+Before=@SERVICE@
 
 [Service]
 Type=oneshot

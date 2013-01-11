@@ -1,6 +1,6 @@
 Name:           akmods
 Version:        0.5.1
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 Group:          System Environment/Kernel
@@ -116,6 +116,9 @@ fi
 
 
 %changelog
+* Fri Jan 11 2013 Richard Shaw <hobbes1069@gmail.com> - 0.5.1-3
+- Really fix akmods.service.in.
+
 * Fri Jun 01 2012 Richard Shaw <hobbes1069@gmail.com> - 0.5.1-2
 - Add service file to run again on shutdown.
 - Add conditional for Fedora 18 to specify correct systemd graphical service.
