@@ -1,6 +1,6 @@
 Name:           akmods
 Version:        0.5.1
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 Group:          System Environment/Kernel
@@ -116,6 +116,11 @@ fi
 
 
 %changelog
+* Sun Nov 16 2014 Nicolas Chauvet <kwizart@gmail.com> - 0.5.1-4
+- Fix akmods on armhfp - rfbz#3117
+- Use yum instead of rpm to install packages - rfbz#3350
+  Switch to a better date format
+
 * Fri Jan 11 2013 Richard Shaw <hobbes1069@gmail.com> - 0.5.1-3
 - Really fix akmods.service.in.
 
