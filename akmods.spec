@@ -1,11 +1,11 @@
 Name:           akmods
-Version:        0.5.1
-Release:        4%{?dist}
+Version:        0.5.2
+Release:        1%{?dist}
 Summary:        Automatic kmods build and install tool 
 
-Group:          System Environment/Kernel
 License:        MIT
 URL:            http://rpmfusion.org/Packaging/KernelModules/Akmods
+
 Source0:        akmods
 Source1:        akmods.1
 Source2:        akmodsbuild
@@ -38,10 +38,10 @@ Requires:       kernel-devel-uname-r
 Requires(pre):  shadow-utils
 
 # systemd unit requirements.
-BuildRequires:  systemd-units
-Requires(post): systemd-units
-Requires(preun): systemd-units
-Requires(postun): systemd-units
+BuildRequires:  systemd
+Requires(post): systemd
+Requires(preun): systemd
+Requires(postun): systemd
 
 
 %description
@@ -94,13 +94,11 @@ if [ $1 -eq 1 ] ; then
 fi
 
 %preun
-if [ $1 -eq 0 ] ; then
-    # Package removal, not upgrade
-    /bin/systemctl --no-reload disable akmods.service > /dev/null 2>&1 || :
-    /bin/systemctl stop akmods.service > /dev/null 2>&1 || :
-    /bin/systemctl --no-reload disable akmods-shutdown.service > /dev/null 2>&1 || :
-    /bin/systemctl stop akmods-shutdown.service > /dev/null 2>&1 || :
-fi
+%systemd_preun akmods.service
+%systemd_preun akmods-shutdown.service
+
+%postun
+%systemd_postun
 
 
 %files 
@@ -116,6 +114,12 @@ fi
 
 
 %changelog
+* Wed Apr  4 2015 Richard Shaw <hobbes1069@gmail.com> - 0.5.2-1
+- Fix temporary directory creation when TMPDIR environment variable is set,
+  fixes BZ#2596.
+- Update systemd scripts to use macros.
+- Fix akmods run on shutdown systemd unit file, fixes BZ#3503.
+
 * Sun Nov 16 2014 Nicolas Chauvet <kwizart@gmail.com> - 0.5.1-4
 - Fix akmods on armhfp - rfbz#3117
 - Use yum instead of rpm to install packages - rfbz#3350

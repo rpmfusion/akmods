@@ -109,7 +109,7 @@ trap "finally" ABRT HUP INT QUIT
 
 create_tmpdir()
 {
-	if ! tmpdir="$(mktemp -d -t ${myprog}.XXXXXXXX)/" ; then 
+	if ! tmpdir="$(mktemp -d -p /tmp ${myprog}.XXXXXXXX)/" ; then 
 		akmods_echo 2 1  "ERROR: failed to create tmpdir."
 		akmods_echo 2 1 --failure; return 1
 	fi

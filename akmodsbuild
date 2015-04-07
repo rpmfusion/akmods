@@ -88,7 +88,7 @@ init ()
 
 	## preparations
 	# tmpdir
-	if ! tmpdir="$(mktemp -d -t ${myprog}.XXXXXXXX)" ; then 
+	if ! tmpdir="$(mktemp -d -p /tmp ${myprog}.XXXXXXXX)" ; then 
 			echo "ERROR: Could create tempdir."
 			exit 1
 	fi
