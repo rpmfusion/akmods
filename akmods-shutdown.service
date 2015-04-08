@@ -6,7 +6,8 @@ Conflicts=shutdown.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=-/usr/sbin/akmods --from-init
+ExecStart=/bin/true
+ExecStop=-/usr/sbin/akmods --from-init
 
 [Install]
 WantedBy=multi-user.target

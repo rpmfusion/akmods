@@ -87,11 +87,11 @@ akmods_echo()
 	fi
 
 	# global logfile
-	echo "$(date +%d\ %b\ %H:%M:%S) akmods: $@" >> "/var/cache/akmods/akmods.log"
+	echo "$(date +%Y/%m/%d\ %H:%M:%S) akmods: $@" >> "/var/cache/akmods/akmods.log"
 
 	# the kmods logfile as well, if we work on a kmod
 	if [[ "${kmodlogfile}" ]]; then
-		echo "$(date +%d\ %b\ %H:%M:%S) akmods: $@" >> "${kmodlogfile}"
+		echo "$(date +%Y/%m/%d\ %H:%M:%S) akmods: $@" >> "${kmodlogfile}"
 	fi
 }
 
@@ -109,7 +109,7 @@ trap "finally" ABRT HUP INT QUIT
 
 create_tmpdir()
 {
-	if ! tmpdir="$(mktemp -d -t ${myprog}.XXXXXXXX)/" ; then 
+	if ! tmpdir="$(mktemp -d -p /tmp ${myprog}.XXXXXXXX)/" ; then 
 		akmods_echo 2 1  "ERROR: failed to create tmpdir."
 		akmods_echo 2 1 --failure; return 1
 	fi
@@ -252,7 +252,7 @@ buildinstall_kmod()
 	# copy rpmbuild log to kmod specific logfile
 	if [[ -s "${tmpdir}"/akmodsbuild.log ]]; then
 		while read line ; do
-			echo "$(date +%d\ %b\ %H:%M:%S) akmodsbuild: ${line}" >> "${kmodlogfile}"
+			echo "$(date +%Y/%m/%d\ %H:%M:%S) akmodsbuild: ${line}" >> "${kmodlogfile}"
 		done < "${tmpdir}"/akmodsbuild.log
 	fi
 
@@ -268,9 +268,9 @@ buildinstall_kmod()
 		return 4
 	fi
 
-	# install
+	# yum install - repository disabled on purpose see rfbz#3350
 	akmods_echo 1 4 "Installing newly built rpms"
-	rpm -U $(find "${tmpdir}results" -type f -name '*.rpm' | grep -v debuginfo) >> "${kmodlogfile}" 2>&1 
+	yum -y install --disablerepo='*' $(find "${tmpdir}results" -type f -name '*.rpm' | grep -v debuginfo) >> "${kmodlogfile}" 2>&1 
 	local returncode=$?
 
 	# place the newly built rpms where user expects them

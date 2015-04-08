@@ -28,6 +28,9 @@ myver="0.4.0"
 # defaults that might get overwritten by user:
 kernels="$(uname -r)"
 target="$(uname -m)"
+if [[ "${target}" == "armv7l" ]]; then
+  target="armv7hl"
+fi
 numberofjobs=$(grep -c processor /proc/cpuinfo 2> /dev/null)
 verboselevel=2
 outputdir="${PWD}"
@@ -85,7 +88,7 @@ init ()
 
 	## preparations
 	# tmpdir
-	if ! tmpdir="$(mktemp -d -t ${myprog}.XXXXXXXX)" ; then 
+	if ! tmpdir="$(mktemp -d -p /tmp ${myprog}.XXXXXXXX)" ; then 
 			echo "ERROR: Could create tempdir."
 			exit 1
 	fi
