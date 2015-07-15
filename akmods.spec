@@ -16,6 +16,8 @@ Source8:        akmods.h2m
 
 BuildArch:      noarch
 
+BuildRequires:  help2man
+
 # not picked up automatically
 Requires:       %{_bindir}/nohup
 Requires:       %{_bindir}/flock
