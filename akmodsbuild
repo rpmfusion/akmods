@@ -23,7 +23,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 myprog="akmodsbuild"
-myver="0.4.0"
+myver="0.5.3"
 
 # defaults that might get overwritten by user:
 kernels="$(uname -r)"
@@ -259,18 +259,17 @@ process_srpm()
 
 myprog_help ()
 {
-	echo "Usage: ${myprog} [OPTIONS] <SRPMS>"
-	echo $'\n'"Rebuilds kmod SRPM(s)"
-	echo $'\n'"Available options (and their defaults): "
+	echo "Rebuilds kmod SRPM(s)"
+	echo $'\n'"Usage: ${myprog} [OPTIONS] <SRPMS>"
+	echo $'\n'"Options:"
 	echo " -k, --kernels         -- build for kernel-versions (output from 'uname -r')"
 	echo " -l, --logfile <file>  -- save rpmduild output to <file>"
 	echo " -o, --outputdir <dir> -- save rpms and logs here (current directory)"
 	echo " -t, --target          -- target-arch (output from 'uname -m')"
 	echo " -v, --verbose         -- increase verboseness"
 	echo " -q, --quiet           -- be more quiet"
-	echo
 	echo " -h, --help            -- show usage"
-	echo " -V, --version           -- show version"
+	echo " -V, --version         -- show version"
 }
 
 while [ "${1}" ] ; do

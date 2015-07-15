@@ -36,7 +36,7 @@
 
 # global vars
 myprog="akmods"
-myver="0.4.0"
+myver="0.5.3"
 kmodlogfile=
 continue_line=""
 tmpdir=
@@ -244,6 +244,10 @@ buildinstall_kmod()
 	# akmods_echo will log to this file from now on as well
 	kmodlogfile="/var/cache/akmods/${this_kmodname}/.last.log"
 
+        # Unset TMPDIR since it is misused by "runuser"
+        # https://bugzilla.rpmfusion.org/show_bug.cgi?id=2596
+        unset TMPDIR
+
 	# build module using akmod
 	akmods_echo 1 4 "Building RPM using the command '$(which akmodsbuild) --target $(uname -m) --kernels ${this_kernelver} ${this_kmodsrpm}'"
 	/sbin/runuser -s /bin/bash -c "$(which akmodsbuild) --quiet --quiet --target $(uname -m) --kernels ${this_kernelver} --outputdir ${tmpdir}results --logfile ${tmpdir}/akmodsbuild.log ${this_kmodsrpm}" akmods >> "${kmodlogfile}" 2>&1
@@ -270,7 +274,14 @@ buildinstall_kmod()
 
 	# yum install - repository disabled on purpose see rfbz#3350
 	akmods_echo 1 4 "Installing newly built rpms"
-	yum -y install --disablerepo='*' $(find "${tmpdir}results" -type f -name '*.rpm' | grep -v debuginfo) >> "${kmodlogfile}" 2>&1 
+        if [ -f /usr/bin/dnf ]
+        then
+            akmods_echo 1 4 "DNF detected"
+            dnf -y install --disablerepo='*' $(find "${tmpdir}results" -type f -name '*.rpm' | grep -v debuginfo) >> "${kmodlogfile}" 2>&1
+        else
+            akmods_echo 1 4 "DNF not found, using YUM instead."
+	    yum -y install --disablerepo='*' $(find "${tmpdir}results" -type f -name '*.rpm' | grep -v debuginfo) >> "${kmodlogfile}" 2>&1
+        fi
 	local returncode=$?
 
 	# place the newly built rpms where user expects them
@@ -407,11 +418,12 @@ check_kmods()
 
 myprog_help ()
 {
-	echo "Usage: ${myprog} [OPTIONS]"
-	echo $'\n'"Checks the akmod packages and rebuilds them if needed"
-	echo $'\n'"Available options:"
+	echo "Checks the akmod packages and rebuilds them if needed"
+	echo $'\n'"Usage: ${myprog} [OPTIONS]"
+	echo $'\n'"Options:"
 	echo " --force             -- try all, even if they failed earlier"
 	echo " --kernels <kernel>  -- build and install only for kernel <kernel>"
+        echo "                        (formatted the same as 'uname -r' would produce)"
 	echo " --akmod <akmod>     -- build and install only akmod <akmod>"
 }
 

@@ -1,19 +1,18 @@
 Name:           akmods
-Version:        0.5.2
-Release:        1%{?dist}
+Version:        0.5.3
+Release:        2%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 License:        MIT
 URL:            http://rpmfusion.org/Packaging/KernelModules/Akmods
 
 Source0:        akmods
-Source1:        akmods.1
 Source2:        akmodsbuild
-Source3:        akmodsbuild.1
 Source4:        akmods.service.in
 Source5:        akmodsposttrans
 Source6:        akmods-shutdown
 Source7:        akmods-shutdown.service
+Source8:        akmods.h2m
 
 BuildArch:      noarch
 
@@ -33,6 +32,8 @@ Requires:       gzip perl make sed tar unzip util-linux which rpm-build
 # We use a virtual provide that would match either
 # kernel-devel or kernel-PAE-devel
 Requires:       kernel-devel-uname-r
+# Try to stop kernel-debug-devel from being chosen over kernel-devel.
+Conflicts:      kernel-debug-devel
 
 # we create a special user that used by akmods to build kmod packages
 Requires(pre):  shadow-utils
@@ -62,20 +63,22 @@ echo Nothing to build.
 mkdir -p %{buildroot}%{_usrsrc}/akmods/ \
          %{buildroot}%{_localstatedir}/cache/akmods/
 install -D -pm 0755 %{SOURCE0} %{buildroot}%{_sbindir}/akmods
-install -D -pm 0644 %{SOURCE1} %{buildroot}%{_mandir}/man1/akmods.1
+#install -D -pm 0644 %{SOURCE1} %{buildroot}%{_mandir}/man1/akmods.1
 install -D -pm 0755 %{SOURCE2} %{buildroot}%{_bindir}/akmodsbuild
-install -D -pm 0644 %{SOURCE3} %{buildroot}%{_mandir}/man1/akmodsbuild.1
+#install -D -pm 0644 %{SOURCE3} %{buildroot}%{_mandir}/man1/akmodsbuild.1
 install -D -pm 0755 %{SOURCE6} %{buildroot}%{_bindir}/akmods-shutdown
 install -D -pm 0755 %{SOURCE5} %{buildroot}%{_sysconfdir}/kernel/postinst.d/akmodsposttrans
 install -D -pm 0644 %{SOURCE7} %{buildroot}%{_unitdir}/akmods-shutdown.service
 
-%if 0%{?fedora} >= 18
 sed "s|@SERVICE@|display-manager.service|" %{SOURCE4} >\
     %{buildroot}%{_unitdir}/akmods.service
-%else
-sed "s|@SERVICE@|prefdm.service|" %{SOURCE4} >\
-    %{buildroot}%{_unitdir}/akmods.service
-%endif
+
+# Generate and install man pages.
+mkdir -p %{buildroot}%{_mandir}/man1
+help2man -N -i %{SOURCE8} -s 1 \
+    -o %{buildroot}%{_mandir}/man1/akmods.1 %{SOURCE0}
+help2man -N -i %{SOURCE8} -s 1 \
+    -o %{buildroot}%{_mandir}/man1/akmodsbuild.1 %{SOURCE2}
 
 
 %pre
@@ -86,19 +89,16 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
     -c "User is used by akmods to build akmod packages" akmods
 
 %post
-# Systemd
-if [ $1 -eq 1 ] ; then 
-    # Initial installation
-    /bin/systemctl enable akmods.service >/dev/null 2>&1 || :
-    /bin/systemctl enable akmods-shutdown.service >/dev/null 2>&1 || :
-fi
+%systemd_post akmods.service
+%systemd_post akmods-shutdown.service
 
 %preun
 %systemd_preun akmods.service
 %systemd_preun akmods-shutdown.service
 
 %postun
-%systemd_postun
+%systemd_postun akmods.service
+%systemd_postun akmods-shutdown.service
 
 
 %files 
@@ -114,6 +114,13 @@ fi
 
 
 %changelog
+* Wed Jul 15  2015 Richard Shaw <hobbes1069@gmail.com> - 0.5.2-2
+- Add package conflicts to stop pulling in kernel-debug-devel, fixes BZ#3386.
+- Add description for the formatting of the <kernel> parameter, BZ#3580.
+- Update static man pages and clean them up.
+- Fixed another instance of TMPDIR causing issues.
+- Added detection of dnf vs yum to akmods, fixed BZ#3481.
+
 * Wed Apr  4 2015 Richard Shaw <hobbes1069@gmail.com> - 0.5.2-1
 - Fix temporary directory creation when TMPDIR environment variable is set,
   fixes BZ#2596.
