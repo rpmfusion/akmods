@@ -1,6 +1,6 @@
 Name:           akmods
 Version:        0.5.4
-Release:        0.3%{?dist}
+Release:        1%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 License:        MIT
