@@ -7,7 +7,7 @@ Conflicts=shutdown.target
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/bin/true
-ExecStop=-/usr/sbin/akmods --from-init
+ExecStop=-/usr/sbin/akmods-shutdown
 
 [Install]
 WantedBy=multi-user.target

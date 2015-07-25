@@ -23,7 +23,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 myprog="akmodsbuild"
-myver="0.5.3"
+myver="0.5.4"
 
 # defaults that might get overwritten by user:
 kernels="$(uname -r)"

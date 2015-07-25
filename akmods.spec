@@ -1,18 +1,19 @@
 Name:           akmods
-Version:        0.5.3
-Release:        2%{?dist}
+Version:        0.5.4
+Release:        0.3%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 License:        MIT
 URL:            http://rpmfusion.org/Packaging/KernelModules/Akmods
 
 Source0:        akmods
-Source2:        akmodsbuild
-Source4:        akmods.service.in
-Source5:        akmodsposttrans
-Source6:        akmods-shutdown
-Source7:        akmods-shutdown.service
-Source8:        akmods.h2m
+Source1:        akmodsbuild
+Source2:        akmodsposttrans
+Source3:        akmods.service.in
+Source4:        akmods-shutdown
+Source5:        akmods-shutdown.service
+Source6:        akmods.h2m
+Source7:        95-akmods.preset
 
 BuildArch:      noarch
 
@@ -62,25 +63,26 @@ echo Nothing to build.
 
 
 %install
-mkdir -p %{buildroot}%{_usrsrc}/akmods/ \
-         %{buildroot}%{_localstatedir}/cache/akmods/
+mkdir -p %{buildroot}%{_usrsrc}/akmods \
+         %{buildroot}%{_localstatedir}/cache/akmods \
+         %{buildroot}%{_prefix}/lib/systemd/system-preset
 install -D -pm 0755 %{SOURCE0} %{buildroot}%{_sbindir}/akmods
-#install -D -pm 0644 %{SOURCE1} %{buildroot}%{_mandir}/man1/akmods.1
-install -D -pm 0755 %{SOURCE2} %{buildroot}%{_bindir}/akmodsbuild
-#install -D -pm 0644 %{SOURCE3} %{buildroot}%{_mandir}/man1/akmodsbuild.1
-install -D -pm 0755 %{SOURCE6} %{buildroot}%{_bindir}/akmods-shutdown
-install -D -pm 0755 %{SOURCE5} %{buildroot}%{_sysconfdir}/kernel/postinst.d/akmodsposttrans
-install -D -pm 0644 %{SOURCE7} %{buildroot}%{_unitdir}/akmods-shutdown.service
+install -D -pm 0755 %{SOURCE1} %{buildroot}%{_sbindir}/akmodsbuild
+install -D -pm 0755 %{SOURCE4} %{buildroot}%{_sbindir}/akmods-shutdown
+install -D -pm 0755 %{SOURCE2} %{buildroot}%{_sysconfdir}/kernel/postinst.d/akmodsposttrans
+install -D -pm 0644 %{SOURCE5} %{buildroot}%{_unitdir}/akmods-shutdown.service
 
-sed "s|@SERVICE@|display-manager.service|" %{SOURCE4} >\
+sed "s|@SERVICE@|display-manager.service|" %{SOURCE3} >\
     %{buildroot}%{_unitdir}/akmods.service
+
+install -pm 0644 %{SOURCE7} %{buildroot}%{_prefix}/lib/systemd/system-preset/
 
 # Generate and install man pages.
 mkdir -p %{buildroot}%{_mandir}/man1
-help2man -N -i %{SOURCE8} -s 1 \
+help2man -N -i %{SOURCE6} -s 1 \
     -o %{buildroot}%{_mandir}/man1/akmods.1 %{SOURCE0}
-help2man -N -i %{SOURCE8} -s 1 \
-    -o %{buildroot}%{_mandir}/man1/akmodsbuild.1 %{SOURCE2}
+help2man -N -i %{SOURCE6} -s 1 \
+    -o %{buildroot}%{_mandir}/man1/akmodsbuild.1 %{SOURCE1}
 
 
 %pre
@@ -104,26 +106,32 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
 
 
 %files 
-%{_bindir}/akmodsbuild
-%{_bindir}/akmods-shutdown
+%{_sbindir}/akmodsbuild
+%{_sbindir}/akmods-shutdown
 %{_sbindir}/akmods
 %{_sysconfdir}/kernel/postinst.d/akmodsposttrans
 %{_unitdir}/akmods.service
 %{_unitdir}/akmods-shutdown.service
+%{_prefix}/lib/systemd/system-preset/95-akmods.preset
 %{_usrsrc}/akmods
 %attr(-,akmods,akmods) %{_localstatedir}/cache/akmods
 %{_mandir}/man1/*
 
 
 %changelog
-* Wed Jul 15  2015 Richard Shaw <hobbes1069@gmail.com> - 0.5.2-2
+* Thu Jul 23 2015 Richard Shaw <hobbes1069@gmail.com> - 0.5.4-1
+- Do not mark a build as failed when only installing the RPM fails.
+- Run akmods-shutdown script instead of akmods on shutdown.
+- Add systemd preset file to enable services by default.
+
+* Wed Jul 15 2015 Richard Shaw <hobbes1069@gmail.com> - 0.5.3-2
 - Add package conflicts to stop pulling in kernel-debug-devel, fixes BZ#3386.
 - Add description for the formatting of the <kernel> parameter, BZ#3580.
 - Update static man pages and clean them up.
 - Fixed another instance of TMPDIR causing issues.
 - Added detection of dnf vs yum to akmods, fixed BZ#3481.
 
-* Wed Apr  4 2015 Richard Shaw <hobbes1069@gmail.com> - 0.5.2-1
+* Wed Apr  1 2015 Richard Shaw <hobbes1069@gmail.com> - 0.5.2-1
 - Fix temporary directory creation when TMPDIR environment variable is set,
   fixes BZ#2596.
 - Update systemd scripts to use macros.
