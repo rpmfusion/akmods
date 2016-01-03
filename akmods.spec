@@ -1,6 +1,6 @@
 Name:           akmods
 Version:        0.5.4
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 License:        MIT
@@ -117,6 +117,9 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
 
 
 %changelog
+* Sun Jan 03 2016 Nicolas Chauvet <kwizart@gmail.com> - 0.5.4-2
+- Revert conflicts kernel-debug-devel
+
 * Thu Jul 23 2015 Richard Shaw <hobbes1069@gmail.com> - 0.5.4-1
 - Do not mark a build as failed when only installing the RPM fails.
 - Run akmods-shutdown script instead of akmods on shutdown.
