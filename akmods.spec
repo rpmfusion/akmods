@@ -35,8 +35,6 @@ Requires:       gzip perl make sed tar unzip util-linux which rpm-build
 # We use a virtual provide that would match either
 # kernel-devel or kernel-PAE-devel
 Requires:       kernel-devel-uname-r
-# Try to stop kernel-debug-devel from being chosen over kernel-devel.
-Conflicts:      kernel-debug-devel
 
 # we create a special user that used by akmods to build kmod packages
 Requires(pre):  shadow-utils
