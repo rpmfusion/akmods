@@ -26,13 +26,13 @@
 ############################################################################
 #
 # ToDo:
-# - use yum on install required kernel-devel pacakges?
-# - better way to detect if a earlier build failed or succeed
+# - use yum/dnf to install required kernel-devel packages?
+# - better way to detect if a earlier build failed or succeeded
 # - special kernel "all" (all that are installed with a matching -devel package; could be called from posttrans in akmods packages)
 # - manpage
 # - make it configurable if kmod building is done with nohup
 # - check on shutdown if akmods is still running and let it finish before continuing
-# - make it configurable if kmod from the repo replace local ones
+# - make it configurable if kmods from the repo replace local ones
 
 # global vars
 myprog="akmods"
@@ -181,7 +181,7 @@ init ()
 	fi
 
 
-	# now that we know that we're root make sure our dir for logging and results is avilable
+	# now that we know that we're root make sure our dir for logging and results is available
 	if [[ ! -d "/var/cache/akmods/" ]] ; then
 		if ! mkdir -p "/var/cache/akmods/" ; then
 			echo -n "/var/cache/akmods/ not found and could not be created" >&2
@@ -231,7 +231,7 @@ buildinstall_kmod()
 	# tmpdir
 	create_tmpdir
 
-	# akmods needs to write there (and nobody else, but mktemp takes care fo that!)
+	# akmods needs to write there (and nobody else, but mktemp takes care of that!)
 	chown akmods "${tmpdir}" "${tmpdir}"results
 
 	# remove old logfiles if they exist
@@ -375,7 +375,7 @@ check_kmods()
 			# okay, kmod wasn't found or is not up2date
 			if [[ "${continue_line}" ]]; then
 				akmods_echo 1 2 --success 
-				# if the files for building modules are not avilable don't even try to build modules
+				# if the files for building modules are not available don't even try to build modules
 				if [[ ! -r /usr/src/kernels/"${this_kernelver}"/Makefile ]] && \
 				   [[ ! -r /usr/lib/modules/${this_kernelver}/build/Makefile ]]; then
 					akmods_echo 1 2 "Files needed for building modules against kernel"
@@ -450,7 +450,7 @@ while [ "${1}" ] ; do
 			elif [[ -r /usr/src/kernels/"${1}"/Makefile ]] && \
 			     [[ ! -r /boot/vmlinuz-"${1}" ]]; then
 				# this is a red hat / fedora kernel-devel package, but the kernel for it is not installed
-				# kmodtool would adds a dep on that kernel when building; thus when we'd try to install the 
+				# kmodtool would add a dep on that kernel when building; thus when we'd try to install the 
 				# rpms we'd run into a missing-dep problem. Thus we prevent that case
 				echo "Kernel ${1} not installed"
 				exit 1
