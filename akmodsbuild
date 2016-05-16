@@ -160,7 +160,7 @@ watch_rpmbuild()
 	# does't use akmods_echo here; this stage handles the output on its own
 	# (seperate process and there is no need to log this)
 	if (( ${verboselevel} == 2 )); then
-		tail --pid ${1} -n +1 -s 0.1 -f ${2} 2>/dev/null | grep --line-buffered -e '%prep' -e '%build' -e '%install' -e '%clean' |  while read line; do 
+		tail --pid ${1} -n +1 -s 0.1 -f ${2} 2>/dev/null | grep --line-buffered -e '%prep' -e '%build' -e '%install' -e '%clean' |  while read line; do
 			if [[ "${line}" != "${line##*prep}" ]]; then
 				echo -n "prep "
 			elif [[ "${line}" != "${line##*build}" ]]; then
@@ -230,7 +230,7 @@ process_srpm()
 	fi
 
 	# finish status for watch_rpmbuild
-	if (( ${verboselevel} >= 2 )); then 
+	if (( ${verboselevel} >= 2 )); then
 		akmods_echo 1 2 -n "Successfull; "
 	fi
 
@@ -238,17 +238,17 @@ process_srpm()
 
 	if ! mv "${tmpdir}/RPMS/${target}/"* "${outputdir}" ; then
 		# linefeed:
-		akmods_echo 1 2 "" 
+		akmods_echo 1 2 ""
 
 		akmods_echo 2 2 "Failed to move ${tmpdir}/RPMS/${target}/"* "to ${outputdir}"
 		return 128
 	fi
 
-	if (( ${verboselevel} == 1 )); then 
+	if (( ${verboselevel} == 1 )); then
 		for rpm in ${rpms_built}; do
 			echo "${outputdir%%/}/${rpm}"
 		done
-	elif (( ${verboselevel} >= 2 )); then 
+	elif (( ${verboselevel} >= 2 )); then
 		akmods_echo 1 2  "Saved ${rpms_built} in ${outputdir%%/}/"
 	fi
 
