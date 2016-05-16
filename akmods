@@ -59,7 +59,7 @@ akmods_echo()
 			echo_success
 			continue_line=""
 			echo
-			return 0	
+			return 0
 		elif [[ "${1}" == "--failure" ]]; then
 			echo_failure
 			echo
@@ -111,7 +111,7 @@ trap "finally" ABRT HUP INT QUIT
 
 create_tmpdir()
 {
-	if ! tmpdir="$(mktemp -d -p /tmp ${myprog}.XXXXXXXX)/" ; then 
+	if ! tmpdir="$(mktemp -d -p /tmp ${myprog}.XXXXXXXX)/" ; then
 		akmods_echo 2 1  "ERROR: failed to create tmpdir."
 		akmods_echo 2 1 --failure; return 1
 	fi
@@ -140,7 +140,7 @@ cleanup_cachedir ()
 
 init ()
 {
-	# some security provisions 
+	# some security provisions
 	\export PATH='/usr/kerberos/sbin:/usr/kerberos/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin'
 	\unalias -a
 	hash -r
@@ -322,7 +322,7 @@ check_kmod_up2date()
 		return 1
 	fi
 
-	# kmod up2date? 
+	# kmod up2date?
 	local kmodpackage="$(rpm -qf /usr/lib/modules/${this_kernelver}/extra/${this_kmodname}/ 2> /dev/null)"
 	if [[ ! "${kmodpackage}" ]]; then
 		# seems we didn't get what we wanted
@@ -379,10 +379,10 @@ check_kmods()
 				if [[ ! -r /usr/src/kernels/"${this_kernelver}"/Makefile ]] && \
 				   [[ ! -r /usr/lib/modules/${this_kernelver}/build/Makefile ]]; then
 					akmods_echo 1 2 "Files needed for building modules against kernel"
-					akmods_echo 1 2 "${this_kernelver} could not be found as the following" 
+					akmods_echo 1 2 "${this_kernelver} could not be found as the following"
 					akmods_echo 1 2 "directories are missing:" 
-					akmods_echo 1 2 "/usr/src/kernels/${this_kernelver}/" 
-					akmods_echo 1 2 -n "/usr/lib/modules/${this_kernelver}/build/" 
+					akmods_echo 1 2 "/usr/src/kernels/${this_kernelver}/"
+					akmods_echo 1 2 -n "/usr/lib/modules/${this_kernelver}/build/"
 					akmods_echo 1 2 -n "Is the correct kernel-devel package installed?"
 					akmods_echo 1 2 --failure
 					return 1
@@ -391,7 +391,7 @@ check_kmods()
 
 			local this_kmodverrel="$(rpm -qp --qf '%{VERSION}-%{RELEASE}' "${akmods_kmodfile}" | sed 's!\.\(fc\|lvn\)[0-9]*!!g' )"
 			if [[ ! "${alwaystry}" ]] && [[ -e "/var/cache/akmods/${this_kmodname}/${this_kmodverrel}-for-${this_kernelver}".failed.log ]]; then
-				akmods_echo 1 2 -n "Ignoring ${this_kmodname}-kmod as it failed earlier" 
+				akmods_echo 1 2 -n "Ignoring ${this_kmodname}-kmod as it failed earlier"
 				akmods_echo 1 2 --warning
 				local someignored="true"
 			else
@@ -413,8 +413,8 @@ check_kmods()
 		akmods_echo 1 2 --success
 	elif [[ "${someignored}" ]] || [[ "${somefailed}" ]] ; then
 		echo
-		akmods_echo 1 2 "Hint: Some kmods were ignored or failed to build or install." 
-		akmods_echo 1 2 "You can try to rebuild and install them by by calling" 
+		akmods_echo 1 2 "Hint: Some kmods were ignored or failed to build or install."
+		akmods_echo 1 2 "You can try to rebuild and install them by by calling"
 		akmods_echo 1 2 "'/usr/sbin/akmods --force' as root."
 		echo
 		sleep 2
