@@ -429,7 +429,7 @@ myprog_help ()
 	echo $'\n'"Options:"
 	echo " --force             -- try all, even if they failed earlier"
 	echo " --kernels <kernel>  -- build and install only for kernel <kernel>"
-        echo "                        (formatted the same as 'uname -r' would produce)"
+	echo "                        (formatted the same as 'uname -r' would produce)"
 	echo " --akmod <akmod>     -- build and install only akmod <akmod>"
 }
 
