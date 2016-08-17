@@ -1,6 +1,6 @@
 Name:           akmods
 Version:        0.5.4
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 License:        MIT
@@ -117,6 +117,9 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
 
 
 %changelog
+* Wed Aug 17 2016 Sérgio Basto <sergio@serjux.com> - 0.5.4-3
+- New release
+
 * Sun Jan 03 2016 Nicolas Chauvet <kwizart@gmail.com> - 0.5.4-2
 - Revert conflicts kernel-debug-devel
 
