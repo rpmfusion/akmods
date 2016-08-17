@@ -144,7 +144,7 @@ init ()
 	\export PATH='/usr/kerberos/sbin:/usr/kerberos/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin'
 	\unalias -a
 	hash -r
-	ulimit -H -c 0 --
+	#ulimit -H -c 0 --
 	IFS=$' \t\n'
 	UMASK=022
 	umask ${UMASK}
