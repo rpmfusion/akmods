@@ -4,7 +4,7 @@ Before=@SERVICE@
 
 [Service]
 Type=oneshot
-RemainAfterExit=true
+RemainAfterExit=yes
 ExecStart=/usr/sbin/akmods --from-init
 # Make sure we load the nvidia module if built on startup, otherwise X will
 # fail. Harmless if not needed.
