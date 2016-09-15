@@ -1,7 +1,7 @@
 Name:           akmods
 Version:        0.5.4
 Release:        3%{?dist}
-Summary:        Automatic kmods build and install tool 
+Summary:        Automatic kmods build and install tool
 
 License:        MIT
 URL:            http://rpmfusion.org/Packaging/KernelModules/Akmods
@@ -47,7 +47,7 @@ Requires(postun): systemd
 
 
 %description
-Akmods startup script will rebuild akmod packages during system 
+Akmods startup script will rebuild akmod packages during system
 boot while its background daemon will build them for kernels right
 after they were installed.
 
@@ -103,7 +103,7 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
 %systemd_postun akmods-shutdown.service
 
 
-%files 
+%files
 %{_sbindir}/akmodsbuild
 %{_sbindir}/akmods-shutdown
 %{_sbindir}/akmods
@@ -170,7 +170,7 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
 - Remove unused references to older fedora
 - Change Requires from kernel-devel to kernel-devel-uname-r
 
-* Tue Nov 24 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.8-3
+* Thu Nov 24 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.8-3
 - Kmod can be newer than akmod due to rebuilds for new kernels (#2063)
 
 * Mon Nov 21 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.8-2
@@ -186,7 +186,7 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
   remove dependency on procmail.
 - Fixes #773. Added /usr/bin/time as a requirement.
 - Fixes #1592.
-- Fixes #1930. "/var/cache/akmods" is now owned by the akmods user. 
+- Fixes #1930. "/var/cache/akmods" is now owned by the akmods user.
 
 * Sun Aug 02 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info> - 0.3.6-3
 - add lockfile as hard dep
@@ -251,15 +251,15 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
 - use rpmdev-vercmp to compare f a akmods is newer then the installed kmod
 - build and install akmods on install
 
-* Wed Jan 09 2007 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.1.1-3
+* Wed Jan 10 2007 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.1.1-3
 - remove akmodstool and integrate it into kmodtool
 
-* Wed Jan 09 2007 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.1.1-2
+* Wed Jan 10 2007 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.1.1-2
 - own /usr/src/akmods
 
-* Sun Jan 06 2007 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.1.1-1
+* Sun Jan 07 2007 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.1.1-1
 - add rpm-build as Require
 - add a status function to akmodsd
 
-* Sun Jan 06 2007 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.1.0-1
+* Sun Jan 07 2007 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.1.0-1
 - Initial RPM release.
