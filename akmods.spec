@@ -1,19 +1,20 @@
 Name:           akmods
-Version:        0.5.4
-Release:        3%{?dist}
-Summary:        Automatic kmods build and install tool
+Version:        0.5.6
+Release:        1%{?dist}
+Summary:        Automatic kmods build and install tool 
 
 License:        MIT
 URL:            http://rpmfusion.org/Packaging/KernelModules/Akmods
 
-Source0:        akmods
-Source1:        akmodsbuild
-Source2:        akmodsposttrans
-Source3:        akmods.service.in
-Source4:        akmods-shutdown
-Source5:        akmods-shutdown.service
-Source6:        akmods.h2m
-Source7:        95-akmods.preset
+Source0:        https://github.com/hobbes1069/%{name}/archive/v%{version}.tar.gz#/%{name}-%{version}.tar.gz
+#Source0:        akmods
+#Source1:        akmodsbuild
+#Source2:        akmodsposttrans
+#Source3:        akmods.service.in
+#Source4:        akmods-shutdown
+#Source5:        akmods-shutdown.service
+#Source6:        akmods.h2m
+#Source7:        95-akmods.preset
 
 BuildArch:      noarch
 
@@ -47,13 +48,13 @@ Requires(postun): systemd
 
 
 %description
-Akmods startup script will rebuild akmod packages during system
+Akmods startup script will rebuild akmod packages during system 
 boot while its background daemon will build them for kernels right
 after they were installed.
 
 
 %prep
-echo Nothing to prep.
+%setup -q
 
 
 %build
@@ -62,25 +63,28 @@ echo Nothing to build.
 
 %install
 mkdir -p %{buildroot}%{_usrsrc}/akmods \
+         %{buildroot}%{_sbindir} \
+         %{buildroot}%{_sysconfdir}/kernel/postinst.d \
+         %{buildroot}%{_unitdir} \
          %{buildroot}%{_localstatedir}/cache/akmods \
          %{buildroot}%{_prefix}/lib/systemd/system-preset
-install -D -pm 0755 %{SOURCE0} %{buildroot}%{_sbindir}/akmods
-install -D -pm 0755 %{SOURCE1} %{buildroot}%{_sbindir}/akmodsbuild
-install -D -pm 0755 %{SOURCE4} %{buildroot}%{_sbindir}/akmods-shutdown
-install -D -pm 0755 %{SOURCE2} %{buildroot}%{_sysconfdir}/kernel/postinst.d/akmodsposttrans
-install -D -pm 0644 %{SOURCE5} %{buildroot}%{_unitdir}/akmods-shutdown.service
+install -pm 0755 akmods %{buildroot}%{_sbindir}/
+install -pm 0755 akmodsbuild %{buildroot}%{_sbindir}/
+install -pm 0755 akmods-shutdown %{buildroot}%{_sbindir}/
+install -pm 0755 akmodsposttrans %{buildroot}%{_sysconfdir}/kernel/postinst.d/
+install -pm 0644 akmods-shutdown.service %{buildroot}%{_unitdir}/
 
-sed "s|@SERVICE@|display-manager.service|" %{SOURCE3} >\
+sed "s|@SERVICE@|display-manager.service|" akmods.service.in >\
     %{buildroot}%{_unitdir}/akmods.service
 
-install -pm 0644 %{SOURCE7} %{buildroot}%{_prefix}/lib/systemd/system-preset/
+install -pm 0644 95-akmods.preset %{buildroot}%{_prefix}/lib/systemd/system-preset/
 
 # Generate and install man pages.
 mkdir -p %{buildroot}%{_mandir}/man1
-help2man -N -i %{SOURCE6} -s 1 \
-    -o %{buildroot}%{_mandir}/man1/akmods.1 %{SOURCE0}
-help2man -N -i %{SOURCE6} -s 1 \
-    -o %{buildroot}%{_mandir}/man1/akmodsbuild.1 %{SOURCE1}
+help2man -N -i akmods.h2m -s 1 \
+    -o %{buildroot}%{_mandir}/man1/akmods.1 akmods
+help2man -N -i akmods.h2m -s 1 \
+    -o %{buildroot}%{_mandir}/man1/akmodsbuild.1 akmodsbuild
 
 
 %pre
@@ -103,7 +107,7 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
 %systemd_postun akmods-shutdown.service
 
 
-%files
+%files 
 %{_sbindir}/akmodsbuild
 %{_sbindir}/akmods-shutdown
 %{_sbindir}/akmods
@@ -117,6 +121,14 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
 
 
 %changelog
+* Fri Oct 14 2016 Richard Shaw <hobbes1069@gmail.com> - 0.5.6-1
+- Disable shutdown systemd service file by default.
+- Remove modprobe line from main service file.
+
+* Fri Apr  8 2016 Richard Shaw <hobbes1069@gmail.com> - 0.5.5-1
+- Update to latest upstream release.
+- Fixes BZ#4023
+
 * Wed Aug 17 2016 Sérgio Basto <sergio@serjux.com> - 0.5.4-3
 - New release
 
@@ -169,97 +181,3 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
 - Update for UsrMove support
 - Remove unused references to older fedora
 - Change Requires from kernel-devel to kernel-devel-uname-r
-
-* Thu Nov 24 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.8-3
-- Kmod can be newer than akmod due to rebuilds for new kernels (#2063)
-
-* Mon Nov 21 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.8-2
-- Add hint about kernel-devel package if rebuild fails due to lack of required
-  development files.
-- Move logging from /var/cache/akmods/akmods.log to /var/log/akmods.log.
-
-* Fri Sep 23 2011 Richard Shaw <hobbes1069@gmail.com> - 0.3.7-1
-- Update to 0.3.7
-- Fixes #1805. Version check is now properly based on rpmdev-vercmp exit code.
-- Fixes #1813. Exit code is now 0 on success for systemd compatability.
-- Fixes #485. Change from "lockfile" to "flock" for lockfile management to
-  remove dependency on procmail.
-- Fixes #773. Added /usr/bin/time as a requirement.
-- Fixes #1592.
-- Fixes #1930. "/var/cache/akmods" is now owned by the akmods user.
-
-* Sun Aug 02 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info> - 0.3.6-3
-- add lockfile as hard dep
-
-* Sun Mar 29 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info> - 0.3.6-2
-- rebuild for new F11 features
-
-* Sun Feb 01 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info - 0.3.6-1
-- update to 0.3.6
--- better posttrans support
--- remove some leftovers from daemon stuff
--- fix a few minor bugs
--- use lockfile
-
-* Thu Jan 29 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info - 0.3.5-1
-- update to 0.3.5, fixes #340
-
-* Sun Jan 11 2009 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info - 0.3.4-1
-- update to 0.3.4, which has some cosmetic changes
-
-* Thu Oct 02 2008 Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info - 0.3.3-2
-- rebuild for rpm fusion
-
-* Sun Sep 21 2008 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.3.3-1
-- proper check for kernel-devel files in akmods as well
-
-* Tue Sep 02 2008 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.3.2-1
-- Start akmods way earlier (level 05) during boot (#1995)
-- proper check for kernel-devel files (#1942)
-
-* Tue Sep 02 2008 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.3.1-2
-- Remove check section
-
-* Sun May 18 2008 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.3.1-1
-- Remove check for inotify
-
-* Sat Apr 12 2008 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.3.0-1
-- Fix thinko in akmodsposttrans
-
-* Sat Apr 12 2008 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.3.0-0.4
-- split init script and poststrans stuff from akmodsds
-- rename akmodsd to akmods
-- rename akmodbuild to akmodsbuild
-- remove the inotifywatch stuff
-
-* Sun Mar 30 2008 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.2.3-1
-- update akmodbuid manpage
-
-* Sat Mar 29 2008 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.2.2-1
-- adjust to recent "arch and flavor in uname" changes from j-rod
-- add man page for akmodbuild
-- cleanups to akmodbuild
-
-* Thu Jan 31 2008 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.2.1-2
-- add a hard dep on kmodtool which is needed during akmod building
-
-* Sat Jan 26 2008 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.2.1-1
-- rename akmods to akmodbuild
-
-* Sun Jan 20 2008 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.2.0-1
-- require kernel-devel
-- use rpmdev-vercmp to compare f a akmods is newer then the installed kmod
-- build and install akmods on install
-
-* Wed Jan 10 2007 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.1.1-3
-- remove akmodstool and integrate it into kmodtool
-
-* Wed Jan 10 2007 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.1.1-2
-- own /usr/src/akmods
-
-* Sun Jan 07 2007 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.1.1-1
-- add rpm-build as Require
-- add a status function to akmodsd
-
-* Sun Jan 07 2007 Thorsten Leemhuis <fedora[AT]leemhuis[DOT]info> - 0.1.0-1
-- Initial RPM release.
