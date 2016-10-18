@@ -7,14 +7,6 @@ License:        MIT
 URL:            http://rpmfusion.org/Packaging/KernelModules/Akmods
 
 Source0:        https://github.com/hobbes1069/%{name}/archive/v%{version}.tar.gz#/%{name}-%{version}.tar.gz
-#Source0:        akmods
-#Source1:        akmodsbuild
-#Source2:        akmodsposttrans
-#Source3:        akmods.service.in
-#Source4:        akmods-shutdown
-#Source5:        akmods-shutdown.service
-#Source6:        akmods.h2m
-#Source7:        95-akmods.preset
 
 BuildArch:      noarch
 
@@ -124,10 +116,6 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
 * Fri Oct 14 2016 Richard Shaw <hobbes1069@gmail.com> - 0.5.6-1
 - Disable shutdown systemd service file by default.
 - Remove modprobe line from main service file.
-
-* Fri Apr  8 2016 Richard Shaw <hobbes1069@gmail.com> - 0.5.5-1
-- Update to latest upstream release.
-- Fixes BZ#4023
 
 * Wed Aug 17 2016 Sérgio Basto <sergio@serjux.com> - 0.5.4-3
 - New release
