@@ -1,0 +1,11 @@
+[Unit]
+Description=Builds and install new kmods from akmod packages
+Before=@SERVICE@
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/akmods --from-init
+
+[Install]
+WantedBy=multi-user.target

@@ -6,7 +6,16 @@ Summary:        Automatic kmods build and install tool
 License:        MIT
 URL:            http://rpmfusion.org/Packaging/KernelModules/Akmods
 
-Source0:        https://github.com/hobbes1069/%{name}/archive/v%{version}.tar.gz#/%{name}-%{version}.tar.gz
+Source0:        95-akmods.preset
+Source1:        akmods
+Source2:        akmodsbuild
+Source3:        akmods.h2m
+Source4:        akmodsinit
+Source5:        akmodsposttrans
+Source6:        akmods.service.in
+Source7:        akmods-shutdown
+Source8:        akmods-shutdown.service
+Source9:        README
 
 BuildArch:      noarch
 
@@ -46,7 +55,7 @@ after they were installed.
 
 
 %prep
-%setup -q
+echo Nothing to setup.
 
 
 %build
@@ -60,23 +69,27 @@ mkdir -p %{buildroot}%{_usrsrc}/akmods \
          %{buildroot}%{_unitdir} \
          %{buildroot}%{_localstatedir}/cache/akmods \
          %{buildroot}%{_prefix}/lib/systemd/system-preset
-install -pm 0755 akmods %{buildroot}%{_sbindir}/
-install -pm 0755 akmodsbuild %{buildroot}%{_sbindir}/
-install -pm 0755 akmods-shutdown %{buildroot}%{_sbindir}/
-install -pm 0755 akmodsposttrans %{buildroot}%{_sysconfdir}/kernel/postinst.d/
-install -pm 0644 akmods-shutdown.service %{buildroot}%{_unitdir}/
+install -pm 0755 %{SOURCE1} %{buildroot}%{_sbindir}/
+install -pm 0755 %{SOURCE2} %{buildroot}%{_sbindir}/
+install -pm 0755 %{SOURCE7} %{buildroot}%{_sbindir}/
+install -pm 0755 %{SOURCE5} %{buildroot}%{_sysconfdir}/kernel/postinst.d/
+install -pm 0644 %{SOURCE8} %{buildroot}%{_unitdir}/
 
-sed "s|@SERVICE@|display-manager.service|" akmods.service.in >\
+sed "s|@SERVICE@|display-manager.service|" %{SOURCE6} >\
     %{buildroot}%{_unitdir}/akmods.service
 
-install -pm 0644 95-akmods.preset %{buildroot}%{_prefix}/lib/systemd/system-preset/
+install -pm 0644 %{SOURCE0} %{buildroot}%{_prefix}/lib/systemd/system-preset/
 
 # Generate and install man pages.
 mkdir -p %{buildroot}%{_mandir}/man1
-help2man -N -i akmods.h2m -s 1 \
+help2man -N -i %{SOURCE3} -s 1 \
     -o %{buildroot}%{_mandir}/man1/akmods.1 akmods
-help2man -N -i akmods.h2m -s 1 \
+help2man -N -i %{SOURCE3} -s 1 \
     -o %{buildroot}%{_mandir}/man1/akmodsbuild.1 akmodsbuild
+
+# Install README
+mkdir -p %{buildroot}%{_docdir}/%{name}
+install -pm 0644 %{SOURCE9} %{buildroot}%{_docdir}/%{name}/
 
 
 %pre
@@ -99,7 +112,8 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
 %systemd_postun akmods-shutdown.service
 
 
-%files 
+%files
+%doc %{_docdir}/%{name}/README
 %{_sbindir}/akmodsbuild
 %{_sbindir}/akmods-shutdown
 %{_sbindir}/akmods

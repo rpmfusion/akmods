@@ -1,0 +1,12 @@
+[BUGS]
+https://bugzilla.rpmfusion.org/buglist.cgi?product=Fedora&component=akmods&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED
+[REPORTING BUGS]
+Submit a bug against the akmods component at:
+.br
+https://bugzilla.rpmfusion.org/enter_bug.cgi?product=Fedora
+[AUTHOR]
+Thorsten Leemhuis <fedora [AT] leemhuis [DOT] info>
+[MAINTAINER]
+Richard Shaw <hobbes1069 [AT] gmail [DOT] com>
+[SEE ALSO]
+http://rpmfusion.org/Packaging/KernelModules/Akmods
