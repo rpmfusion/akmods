@@ -83,9 +83,11 @@ install -pm 0644 %{SOURCE0} %{buildroot}%{_prefix}/lib/systemd/system-preset/
 # Generate and install man pages.
 mkdir -p %{buildroot}%{_mandir}/man1
 help2man -N -i %{SOURCE3} -s 1 \
-    -o %{buildroot}%{_mandir}/man1/akmods.1 akmods
+    -o %{buildroot}%{_mandir}/man1/akmods.1 \
+       %{buildroot}%{_sbindir}/akmods
 help2man -N -i %{SOURCE3} -s 1 \
-    -o %{buildroot}%{_mandir}/man1/akmodsbuild.1 akmodsbuild
+    -o %{buildroot}%{_mandir}/man1/akmodsbuild.1 \
+       %{buildroot}%{_sbindir}/akmodsbuild
 
 # Install README
 mkdir -p %{buildroot}%{_docdir}/%{name}
