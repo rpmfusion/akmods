@@ -36,6 +36,9 @@ Requires:       gzip perl make sed tar unzip util-linux which rpm-build
 # We use a virtual provide that would match either
 # kernel-devel or kernel-PAE-devel
 Requires:       kernel-devel-uname-r
+%if 0%{?fedora}
+Suggests:       kernel-devel
+%endif
 
 # we create a special user that used by akmods to build kmod packages
 Requires(pre):  shadow-utils
@@ -130,6 +133,9 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
 - Implement systemd service for akmods kernel posttrans which inhibits
   shutdown.
 - Remove akmods-shutdown service file.
+
+* Mon Nov 28 2016 Nicolas Chauvet <kwizart@gmail.com> - 0.5.6-2
+- Use Suggests kernel-devel weak-dependency - see rfbz#3386
 
 * Fri Oct 14 2016 Richard Shaw <hobbes1069@gmail.com> - 0.5.6-1
 - Disable shutdown systemd service file by default.
