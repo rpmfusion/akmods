@@ -1,6 +1,6 @@
 Name:           akmods
-Version:        0.5.6
-Release:        2%{?dist}
+Version:        0.5.7
+Release:        0.1%{?dist}
 Summary:        Automatic kmods build and install tool 
 
 License:        MIT
@@ -13,8 +13,7 @@ Source3:        akmods.h2m
 Source4:        akmodsinit
 Source5:        akmodsposttrans
 Source6:        akmods.service.in
-Source7:        akmods-shutdown
-Source8:        akmods-shutdown.service
+Source7:        akmodsposttrans@.service
 Source9:        README
 
 BuildArch:      noarch
@@ -37,15 +36,13 @@ Requires:       gzip perl make sed tar unzip util-linux which rpm-build
 # We use a virtual provide that would match either
 # kernel-devel or kernel-PAE-devel
 Requires:       kernel-devel-uname-r
-%if 0%{?fedora}
-Suggests:       kernel-devel
-%endif
 
 # we create a special user that used by akmods to build kmod packages
 Requires(pre):  shadow-utils
 
 # systemd unit requirements.
 BuildRequires:  systemd
+Requires:       systemd
 Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
@@ -74,10 +71,8 @@ mkdir -p %{buildroot}%{_usrsrc}/akmods \
          %{buildroot}%{_prefix}/lib/systemd/system-preset
 install -pm 0755 %{SOURCE1} %{buildroot}%{_sbindir}/
 install -pm 0755 %{SOURCE2} %{buildroot}%{_sbindir}/
-install -pm 0755 %{SOURCE7} %{buildroot}%{_sbindir}/
 install -pm 0755 %{SOURCE5} %{buildroot}%{_sysconfdir}/kernel/postinst.d/
-install -pm 0644 %{SOURCE8} %{buildroot}%{_unitdir}/
-
+install -pm 0644 %{SOURCE7} %{buildroot}%{_unitdir}/
 sed "s|@SERVICE@|display-manager.service|" %{SOURCE6} >\
     %{buildroot}%{_unitdir}/akmods.service
 
@@ -106,25 +101,24 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
 
 %post
 %systemd_post akmods.service
-%systemd_post akmods-shutdown.service
+#systemd_post akmods-shutdown.service
 
 %preun
 %systemd_preun akmods.service
-%systemd_preun akmods-shutdown.service
+#systemd_preun akmods-shutdown.service
 
 %postun
 %systemd_postun akmods.service
-%systemd_postun akmods-shutdown.service
+#systemd_postun akmods-shutdown.service
 
 
 %files
 %doc %{_docdir}/%{name}/README
 %{_sbindir}/akmodsbuild
-%{_sbindir}/akmods-shutdown
 %{_sbindir}/akmods
 %{_sysconfdir}/kernel/postinst.d/akmodsposttrans
 %{_unitdir}/akmods.service
-%{_unitdir}/akmods-shutdown.service
+%{_unitdir}/akmodsposttrans@.service
 %{_prefix}/lib/systemd/system-preset/95-akmods.preset
 %{_usrsrc}/akmods
 %attr(-,akmods,akmods) %{_localstatedir}/cache/akmods
@@ -132,8 +126,10 @@ useradd -r -g akmods -d /var/cache/akmods/ -s /sbin/nologin \
 
 
 %changelog
-* Mon Nov 28 2016 Nicolas Chauvet <kwizart@gmail.com> - 0.5.6-2
-- Use Suggests kernel-devel weak-dependency - see rfbz#3386
+* Mon Jan 23 2017 Richard Shaw <hobbes1069@gmail.com> - 0.5.7-0.1
+- Implement systemd service for akmods kernel posttrans which inhibits
+  shutdown.
+- Remove akmods-shutdown service file.
 
 * Fri Oct 14 2016 Richard Shaw <hobbes1069@gmail.com> - 0.5.6-1
 - Disable shutdown systemd service file by default.

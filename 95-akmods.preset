@@ -5,4 +5,3 @@
 # presents itself:
 # https://bugzilla.rpmfusion.org/show_bug.cgi?id=3713
 enable akmods.service
-#enable akmods-shutdown.service
