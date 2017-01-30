@@ -34,4 +34,5 @@ if [[ ! -w / ]]; then
 fi
 
 # needs to run in background as rpmdb might be locked otherwise
-nohup /usr/sbin/akmods --from-kernel-posttrans --kernels ${1} &> /dev/null &
+#nohup /usr/sbin/akmods --from-kernel-posttrans --kernels ${1} &> /dev/null &
+/usr/bin/systemctl start akmodsposttrans@${1}.service

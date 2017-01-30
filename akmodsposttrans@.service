@@ -4,4 +4,4 @@ Description=Building and installing kmods for kernel %i
 [Service]
 Type=simple
 RemainAfterExit=yes
-ExecStart=/usr/bin/systemd-inhibit --who=akmods --why="Building kernel modules" /usr/sbin/akmods --from-kernel-posttrans --kernels %i
+ExecStart=/usr/bin/systemd-inhibit --who=akmods --why="Building kernel modules" /usr/bin/nohup /usr/sbin/akmods --from-kernel-posttrans --kernels %i
