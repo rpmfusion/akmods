@@ -295,8 +295,8 @@ buildinstall_kmod()
 			akmods_echo 1 2 --failure
 		fi
 		akmods_echo 2 1 "Could not install newly built RPMs. You can find them and the logfile"
-		akmods_echo 2 1 "${this_kmodverrel}-for-${this_kernelver}.failed.log in /var/cache/akmods/${this_kmodname}/"
-		cp -fl "${kmodlogfile}" "/var/cache/akmods/${this_kmodname}/${this_kmodverrel}-for-${this_kernelver}.failed.log"
+		akmods_echo 2 1 "${this_kmodverrel}-for-${this_kernelver}.instfailed.log in /var/cache/akmods/${this_kmodname}/"
+		cp -fl "${kmodlogfile}" "/var/cache/akmods/${this_kmodname}/${this_kmodverrel}-for-${this_kernelver}.instfailed.log"
 		kmodlogfile=""
 		remove_tmpdir
 		return 8
